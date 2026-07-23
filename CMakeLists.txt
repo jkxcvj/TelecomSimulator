@@ -8,4 +8,10 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_executable(TelecomSimulator
     src/main.cpp
+    src/User.cpp
+)
+
+target_include_directories(TelecomSimulator
+    PRIVATE
+    include
 )
