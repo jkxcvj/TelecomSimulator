@@ -10,6 +10,7 @@ add_executable(TelecomSimulator
     src/main.cpp
     src/User.cpp
     src/Network.cpp
+    src/Call.cpp
 )
 
 target_include_directories(TelecomSimulator

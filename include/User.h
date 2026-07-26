@@ -13,7 +13,7 @@ public:
     void print() const;
 
 private:
-    int id;
-    std::string name;
-    std::string phoneNumber;
+    int mId;
+    std::string mName;
+    std::string mPhoneNumber;
 };

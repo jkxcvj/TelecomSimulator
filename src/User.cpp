@@ -2,28 +2,28 @@
 #include <iostream>
 
 User::User(int id, std::string name, std::string phoneNumber)
-    : id(id), name(std::move(name)), phoneNumber(std::move(phoneNumber))
+    : mId(id), mName(std::move(name)), mPhoneNumber(std::move(phoneNumber))
 {
 }
 
 int User::getId() const
 {
-    return id;
+    return mId;
 }
 
 const std::string &User::getName() const
 {
-    return name;
+    return mName;
 }
 
 const std::string &User::getPhoneNumber() const
 {
-    return phoneNumber;
+    return mPhoneNumber;
 }
 
 void User::print() const
 {
-    std::cout << "User ID: " << id << "\n";
-    std::cout << "Name: " << name << "\n";
-    std::cout << "Phone Number: " << phoneNumber << "\n";
+    std::cout << "User ID: " << mId << "\n";
+    std::cout << "Name: " << mName << "\n";
+    std::cout << "Phone Number: " << mPhoneNumber << "\n";
 }
