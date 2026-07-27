@@ -82,7 +82,7 @@ void Network::printCalls() const
     }
     for (const auto &call : mCalls)
     {
-        std::cout << "Call ID: " << call.getId() << ", Caller Id: " << call.getCallerId() << ", Receiver Id: " << call.getReceiverId() << "\n";
+        call.print();
     }
 }
 
@@ -94,4 +94,59 @@ bool Network::createCall(int callId, int callerId, int receiverId)
     }
     mCalls.emplace_back(callId, callerId, receiverId);
     return true;
+}
+
+Call *Network::findCall(int callId)
+{
+    for (auto &call : mCalls)
+    {
+        if (call.getId() == callId)
+        {
+            return &call;
+        }
+    }
+    return nullptr;
+}
+const Call *Network::findCall(int callId) const
+{
+    for (const auto &call : mCalls)
+    {
+        if (call.getId() == callId)
+        {
+            return &call;
+        }
+    }
+    return nullptr;
+}
+
+bool Network::isUserBusy(int userId) const
+{
+    for (const auto &call : mCalls)
+    {
+        if ((call.getCallerId() == userId || call.getReceiverId() == userId) && call.getStatusId() == CallStatus::Active)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool Network::startCall(int callId)
+{
+    Call *currCall = findCall(callId);
+    if (currCall == nullptr || isUserBusy(currCall->getCallerId()) || isUserBusy(currCall->getReceiverId()))
+    {
+        return false;
+    }
+    return currCall->start();
+}
+
+bool Network::endCall(int callId)
+{
+    Call *currCall = findCall(callId);
+    if (currCall == nullptr)
+    {
+        return false;
+    }
+    return currCall->end();
 }
