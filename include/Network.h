@@ -3,6 +3,7 @@
 #include <vector>
 #include "User.h"
 #include <cstddef>
+#include "Call.h"
 
 class Network
 {
@@ -11,7 +12,13 @@ public:
     bool removeUser(int id);
     void printUsers() const;
     std::size_t getUserCount() const;
+    bool createCall(int callId, int callerId, int receiverId);
+    void printCalls() const;
+    std::size_t getCallCount() const;
 
 private:
     std::vector<User> mUsers;
+    std::vector<Call> mCalls;
+    bool userExists(int id) const;
+    bool callExists(int id) const;
 };
