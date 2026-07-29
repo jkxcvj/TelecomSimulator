@@ -1,3 +1,6 @@
+// Educational example of a minimal custom C++ test runner.
+// The production test suite uses GoogleTest.
+
 #include <iostream>
 #include <string>
 
