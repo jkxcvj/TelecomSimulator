@@ -6,7 +6,7 @@ TEST(UserTests, ConstructorStoresId)
 {
     User user(1, "John Doe", "123-456-7890");
 
-    EXPECT_EQ(999, user.getId());
+    EXPECT_EQ(1, user.getId());
 }
 
 TEST(UserTests, ConstructorStoresName)
