@@ -12,23 +12,36 @@ permissions:
   contents: read
 
 jobs:
-  build-and-test:
+  release:
+    name: Release build
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
 
-      - name: Show tool versions
-        run: |
-          cmake --version
-          g++ --version
-
       - name: Configure project
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DENABLE_WARNINGS_AS_ERRORS=ON
+        run: cmake -S . -B build-release -DCMAKE_BUILD_TYPE=Release -DENABLE_WARNINGS_AS_ERRORS=ON
 
       - name: Build project
-        run: cmake --build build
+        run: cmake --build build-release
 
       - name: Run tests
-        run: ctest --test-dir build --output-on-failure
+        run: ctest --test-dir build-release --output-on-failure
+
+  sanitizers:
+    name: Debug with ASan and UBSan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Configure project
+        run: cmake -S . -B build-sanitizers -DCMAKE_BUILD_TYPE=Debug -DENABLE_WARNINGS_AS_ERRORS=ON -DENABLE_ADDRESS_SANITIZER=ON -DENABLE_UNDEFINED_BEHAVIOR_SANITIZER=ON
+
+      - name: Build project
+        run: cmake --build build-sanitizers
+
+      - name: Run tests
+        run: ctest --test-dir build-sanitizers --output-on-failure
