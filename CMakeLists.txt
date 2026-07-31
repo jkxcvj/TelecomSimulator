@@ -14,6 +14,12 @@ option(
     OFF
 )
 
+option(
+    ENABLE_ADDRESS_SANITIZER
+    "Enable AddressSanitizer"
+    OFF
+)
+
 function(enable_project_warnings target_name)
     if(MSVC)
         target_compile_options(
@@ -48,6 +54,37 @@ function(enable_project_warnings target_name)
     endif()
 endfunction()
 
+function(enable_address_sanitizer target_name)
+    if(NOT ENABLE_ADDRESS_SANITIZER)
+        return()
+    endif()
+
+    if(MSVC)
+        target_compile_options(
+            ${target_name}
+            PRIVATE
+            /fsanitize=address
+        )
+    else()
+        target_compile_options(
+            ${target_name}
+            PRIVATE
+            -fsanitize=address
+            -fno-omit-frame-pointer
+        )
+
+        get_target_property(target_type ${target_name} TYPE)
+
+        if(NOT target_type STREQUAL "STATIC_LIBRARY")
+            target_link_options(
+                ${target_name}
+                PRIVATE
+                -fsanitize=address
+            )
+        endif()
+    endif()
+endfunction()
+
 FetchContent_Declare(
     googletest
     GIT_REPOSITORY https://github.com/google/googletest.git
@@ -68,6 +105,7 @@ target_include_directories(telecom_core
 )
 
 enable_project_warnings(telecom_core)
+enable_address_sanitizer(telecom_core)
 
 add_executable(TelecomSimulator
     src/main.cpp
@@ -79,6 +117,7 @@ target_link_libraries(TelecomSimulator
 )
 
 enable_project_warnings(TelecomSimulator)
+enable_address_sanitizer(TelecomSimulator)
 
 enable_testing()
 
@@ -95,7 +134,17 @@ target_link_libraries(TelecomGTests
 )
 
 enable_project_warnings(TelecomGTests)
+enable_address_sanitizer(TelecomGTests)
 
 include(GoogleTest)
 
 gtest_discover_tests(TelecomGTests)
+
+if(ENABLE_ADDRESS_SANITIZER)
+    add_executable(AsanDemo
+        examples/AsanDemo.cpp
+    )
+
+    enable_project_warnings(AsanDemo)
+    enable_address_sanitizer(AsanDemo)
+endif()
