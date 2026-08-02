@@ -1,4 +1,5 @@
 #include "Network.h"
+
 #include <iostream>
 
 void Network::printUsers() const
@@ -13,10 +14,7 @@ void Network::printUsers() const
         std::cout << "User ID: " << user.getId() << ", Name: " << user.getName() << "\n";
     }
 }
-std::size_t Network::getUserCount() const
-{
-    return mUsers.size();
-}
+std::size_t Network::getUserCount() const { return mUsers.size(); }
 
 bool Network::addUser(const User &user)
 {
@@ -68,10 +66,7 @@ bool Network::callExists(int id) const
     return false;
 }
 
-std::size_t Network::getCallCount() const
-{
-    return mCalls.size();
-}
+std::size_t Network::getCallCount() const { return mCalls.size(); }
 
 void Network::printCalls() const
 {
@@ -88,7 +83,8 @@ void Network::printCalls() const
 
 bool Network::createCall(int callId, int callerId, int receiverId)
 {
-    if ((userExists(callerId) == false) || (userExists(receiverId) == false) || (callerId == receiverId) || (callExists(callId)))
+    if ((userExists(callerId) == false) || (userExists(receiverId) == false) || (callerId == receiverId) ||
+        (callExists(callId)))
     {
         return false;
     }
@@ -123,7 +119,8 @@ bool Network::isUserBusy(int userId) const
 {
     for (const auto &call : mCalls)
     {
-        if ((call.getCallerId() == userId || call.getReceiverId() == userId) && call.getStatusId() == CallStatus::Active)
+        if ((call.getCallerId() == userId || call.getReceiverId() == userId) &&
+            call.getStatusId() == CallStatus::Active)
         {
             return true;
         }

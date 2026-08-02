@@ -23,6 +23,9 @@ jobs:
       - name: Configure project
         run: cmake -S . -B build-release -DCMAKE_BUILD_TYPE=Release -DENABLE_WARNINGS_AS_ERRORS=ON
 
+      - name: Check source formatting
+        run: cmake --build build-release --target format-check
+
       - name: Build project
         run: cmake --build build-release
 

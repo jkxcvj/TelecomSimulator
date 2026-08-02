@@ -4,7 +4,7 @@
 
 class User
 {
-public:
+  public:
     User(int id, std::string name, std::string phoneNumber);
 
     int getId() const;
@@ -12,7 +12,7 @@ public:
     const std::string &getPhoneNumber() const;
     void print() const;
 
-private:
+  private:
     int mId;
     std::string mName;
     std::string mPhoneNumber;

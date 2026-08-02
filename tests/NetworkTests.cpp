@@ -5,7 +5,7 @@
 
 class NetworkTest : public ::testing::Test
 {
-protected:
+  protected:
     Network mNetwork;
     User mFirstUser{1, "John Doe", "123-456-7890"};
     User mSecondUser{2, "Johnny Doesony", "123-456-7777"};
@@ -50,10 +50,7 @@ TEST_F(NetworkTest, AddingUniqueUserIncreasesUserCount)
 
 TEST_F(NetworkTest, AddingDuplicateUserIdIsRejectedAndKeepsUserCount)
 {
-    User userWithDuplicateId{
-        mFirstUser.getId(),
-        "Completely Different Name",
-        "000-000-0000"};
+    User userWithDuplicateId{mFirstUser.getId(), "Completely Different Name", "000-000-0000"};
 
     EXPECT_FALSE(mNetwork.addUser(userWithDuplicateId));
     EXPECT_EQ(4, mNetwork.getUserCount());
@@ -85,17 +82,11 @@ TEST_P(InvalidCallCreationTest, InvalidCallIsRejected)
     EXPECT_EQ(0, mNetwork.getCallCount());
 }
 
-INSTANTIATE_TEST_SUITE_P(
-    InvalidCallCases,
-    InvalidCallCreationTest,
-    ::testing::Values(
-        InvalidCallCreationCase{1, 99, 2, "MissingCaller"},
-        InvalidCallCreationCase{2, 1, 99, "MissingReceiver"},
-        InvalidCallCreationCase{3, 1, 1, "SameUser"}),
-    [](const ::testing::TestParamInfo<InvalidCallCreationCase> &info)
-    {
-        return info.param.name;
-    });
+INSTANTIATE_TEST_SUITE_P(InvalidCallCases, InvalidCallCreationTest,
+                         ::testing::Values(InvalidCallCreationCase{1, 99, 2, "MissingCaller"},
+                                           InvalidCallCreationCase{2, 1, 99, "MissingReceiver"},
+                                           InvalidCallCreationCase{3, 1, 1, "SameUser"}),
+                         [](const ::testing::TestParamInfo<InvalidCallCreationCase> &info) { return info.param.name; });
 
 TEST_F(NetworkTest, DuplicateCallIdIsRejectedAndCallCountDoesNotChange)
 {

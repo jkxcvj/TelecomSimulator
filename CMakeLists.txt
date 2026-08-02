@@ -197,3 +197,41 @@ if(ENABLE_UNDEFINED_BEHAVIOR_SANITIZER)
     enable_project_warnings(UbsanDemo)
     enable_undefined_behavior_sanitizer(UbsanDemo)
 endif()
+
+find_program(
+    CLANG_FORMAT_EXECUTABLE
+    NAMES clang-format
+    REQUIRED
+)
+
+file(
+    GLOB_RECURSE PROJECT_FORMAT_FILES
+    CONFIGURE_DEPENDS
+    "${CMAKE_SOURCE_DIR}/include/*.h"
+    "${CMAKE_SOURCE_DIR}/src/*.cpp"
+    "${CMAKE_SOURCE_DIR}/tests/*.cpp"
+    "${CMAKE_SOURCE_DIR}/examples/*.cpp"
+)
+
+add_custom_target(
+    format
+    COMMAND
+    ${CLANG_FORMAT_EXECUTABLE}
+    -i
+    ${PROJECT_FORMAT_FILES}
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    COMMENT "Formatting C++ source files"
+    VERBATIM
+)
+
+add_custom_target(
+    format-check
+    COMMAND
+    ${CLANG_FORMAT_EXECUTABLE}
+    --dry-run
+    --Werror
+    ${PROJECT_FORMAT_FILES}
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    COMMENT "Checking C++ source formatting"
+    VERBATIM
+)

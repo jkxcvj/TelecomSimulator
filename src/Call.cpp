@@ -1,26 +1,16 @@
 #include "Call.h"
+
 #include <iostream>
 
-Call::Call(int callId, int callerId, int receiverId) : mId(callId), mCallerId(callerId), mReceiverId(receiverId), mStatus(CallStatus::Created)
+Call::Call(int callId, int callerId, int receiverId)
+    : mId(callId), mCallerId(callerId), mReceiverId(receiverId), mStatus(CallStatus::Created)
 {
 }
 
-int Call::getId() const
-{
-    return mId;
-}
-int Call::getCallerId() const
-{
-    return mCallerId;
-}
-int Call::getReceiverId() const
-{
-    return mReceiverId;
-}
-CallStatus Call::getStatusId() const
-{
-    return mStatus;
-}
+int Call::getId() const { return mId; }
+int Call::getCallerId() const { return mCallerId; }
+int Call::getReceiverId() const { return mReceiverId; }
+CallStatus Call::getStatusId() const { return mStatus; }
 
 bool Call::start()
 {
