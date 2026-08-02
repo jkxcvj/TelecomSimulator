@@ -1,13 +1,14 @@
 #pragma once
 
-#include <vector>
-#include "User.h"
 #include <cstddef>
+#include <vector>
+
 #include "Call.h"
+#include "User.h"
 
 class Network
 {
-public:
+  public:
     bool addUser(const User &user);
     bool removeUser(int id);
     void printUsers() const;
@@ -18,7 +19,7 @@ public:
     bool startCall(int callId);
     bool endCall(int callId);
 
-private:
+  private:
     std::vector<User> mUsers;
     std::vector<Call> mCalls;
     bool userExists(int id) const;

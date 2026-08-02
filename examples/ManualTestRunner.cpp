@@ -4,15 +4,11 @@
 #include <iostream>
 #include <string>
 
-#include "User.h"
 #include "Call.h"
 #include "Network.h"
+#include "User.h"
 
-void check(
-    bool condition,
-    const std::string &testName,
-    int &passed,
-    int &failed)
+void check(bool condition, const std::string &testName, int &passed, int &failed)
 {
     if (condition)
     {
@@ -44,7 +40,8 @@ void testCall(int &passed, int &failed)
 
     Call callEndedBeforeStart(2, 3, 4);
     check(callEndedBeforeStart.end() == false, "Call doesent end before it started", passed, failed);
-    check(callEndedBeforeStart.getStatusId() == CallStatus::Created, "Call didnt change status from Created", passed, failed);
+    check(callEndedBeforeStart.getStatusId() == CallStatus::Created, "Call didnt change status from Created", passed,
+          failed);
 
     Call activeCall(3, 5, 6);
     check(activeCall.start() == true, "Call starts properly", passed, failed);
@@ -75,10 +72,13 @@ void testNetworkUserManagement(int &passed, int &failed)
     check(newNetwork.getUserCount() == 2, "User count correct after adding second user", passed, failed);
     check(newNetwork.removeUser(secondUser.getId()) == true, "Second user is removed from the network", passed, failed);
     check(newNetwork.getUserCount() == 1, "User count correct after removing second user", passed, failed);
-    check(newNetwork.removeUser(secondUser.getId()) == false, "Second user cant be removed again from the network", passed, failed);
-    check(newNetwork.getUserCount() == 1, "User count correct after trying to remove second user again", passed, failed);
+    check(newNetwork.removeUser(secondUser.getId()) == false, "Second user cant be removed again from the network",
+          passed, failed);
+    check(newNetwork.getUserCount() == 1, "User count correct after trying to remove second user again", passed,
+          failed);
     check(newNetwork.removeUser(999) == false, "Second user cant be removed again from the network", passed, failed);
-    check(newNetwork.getUserCount() == 1, "User count correct after trying to remove non existing user", passed, failed);
+    check(newNetwork.getUserCount() == 1, "User count correct after trying to remove non existing user", passed,
+          failed);
 }
 
 void testNetworkCallCreation(int &passed, int &failed)
@@ -91,14 +91,19 @@ void testNetworkCallCreation(int &passed, int &failed)
     callCreationTestNetwork.addUser(secondTestUser);
     callCreationTestNetwork.addUser(thirdTestUser);
     check(callCreationTestNetwork.getCallCount() == 0, "Call count is 0", passed, failed);
-    check(callCreationTestNetwork.createCall(5, 1, 2) == true, "Creating first call between user 1 and user 2", passed, failed);
+    check(callCreationTestNetwork.createCall(5, 1, 2) == true, "Creating first call between user 1 and user 2", passed,
+          failed);
     check(callCreationTestNetwork.getCallCount() == 1, "Call count is 1 after first call", passed, failed);
-    check(callCreationTestNetwork.createCall(6, 4, 2) == false, "Creating second call between not existing user and user 2 rejected", passed, failed);
+    check(callCreationTestNetwork.createCall(6, 4, 2) == false,
+          "Creating second call between not existing user and user 2 rejected", passed, failed);
     check(callCreationTestNetwork.getCallCount() == 1, "Call count is 1 after second call", passed, failed);
-    check(callCreationTestNetwork.createCall(7, 2, 4) == false, "Creating third call between user 2 and not existing user rejected", passed, failed);
-    check(callCreationTestNetwork.createCall(8, 1, 1) == false, "Creating fourth call between user 1 and himself rejected", passed, failed);
+    check(callCreationTestNetwork.createCall(7, 2, 4) == false,
+          "Creating third call between user 2 and not existing user rejected", passed, failed);
+    check(callCreationTestNetwork.createCall(8, 1, 1) == false,
+          "Creating fourth call between user 1 and himself rejected", passed, failed);
     check(callCreationTestNetwork.createCall(5, 2, 3) == false, "Creating call with already used ID", passed, failed);
-    check(callCreationTestNetwork.createCall(9, 2, 3) == true, "Creating call between user 2 and user 3", passed, failed);
+    check(callCreationTestNetwork.createCall(9, 2, 3) == true, "Creating call between user 2 and user 3", passed,
+          failed);
     check(callCreationTestNetwork.getCallCount() == 2, "Call count final is 2", passed, failed);
 }
 
@@ -131,7 +136,8 @@ void testNetworkCallControl(int &passed, int &failed)
     check(callControlNetwork.endCall(12) == true, "Ending call with ID = 12", passed, failed);
     check(callControlNetwork.startCall(11) == true, "Starting call with ID = 11 for third time", passed, failed);
     check(callControlNetwork.endCall(11) == true, "Ending call with ID = 11", passed, failed);
-    check(callControlNetwork.startCall(11) == false, "Starting call with ID = 11 for the fourth time - rejected", passed, failed);
+    check(callControlNetwork.startCall(11) == false, "Starting call with ID = 11 for the fourth time - rejected",
+          passed, failed);
     check(callControlNetwork.getCallCount() == 3, "Call amount after all operations stays the same", passed, failed);
 }
 

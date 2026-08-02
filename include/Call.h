@@ -8,7 +8,7 @@ enum class CallStatus
 };
 class Call
 {
-public:
+  public:
     Call(int callId, int callerId, int receiverId);
     int getId() const;
     int getCallerId() const;
@@ -18,7 +18,7 @@ public:
     bool end();
     void print() const;
 
-private:
+  private:
     int mId;
     int mCallerId;
     int mReceiverId;

@@ -23,6 +23,9 @@ jobs:
       - name: Configure project
         run: cmake -S . -B build-release -DCMAKE_BUILD_TYPE=Release -DENABLE_WARNINGS_AS_ERRORS=ON
 
+      - name: Check source formatting
+        run: cmake --build build-release --target format-check
+
       - name: Build project
         run: cmake --build build-release
 
@@ -45,3 +48,29 @@ jobs:
 
       - name: Run tests
         run: ctest --test-dir build-sanitizers --output-on-failure
+
+  clang-tidy:
+    name: Clang-Tidy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        
+      - name: Install clang-tidy
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-tidy
+
+      - name: Configure project
+        run: >
+          cmake -S . -B build-tidy
+          -DCMAKE_BUILD_TYPE=Debug
+          -DENABLE_CLANG_TIDY=ON
+          -DENABLE_WARNINGS_AS_ERRORS=ON
+
+      - name: Build with clang-tidy
+        run: cmake --build build-tidy
+
+      - name: Run tests
+        run: ctest --test-dir build-tidy --output-on-failure
