@@ -7,6 +7,7 @@ include(FetchContent)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(
     ENABLE_WARNINGS_AS_ERRORS
@@ -25,6 +26,30 @@ option(
     "Enable UndefinedBehaviorSanitizer"
     OFF
 )
+
+option(
+    ENABLE_CLANG_TIDY
+    "Run clang-tidy during compilation"
+    OFF
+)
+
+if(ENABLE_CLANG_TIDY)
+    find_program(
+        CLANG_TIDY_EXECUTABLE
+        NAMES clang-tidy
+        REQUIRED
+    )
+endif()
+
+function(enable_clang_tidy target_name)
+    if(ENABLE_CLANG_TIDY)
+        set_target_properties(
+            ${target_name}
+            PROPERTIES
+            CXX_CLANG_TIDY "${CLANG_TIDY_EXECUTABLE};--quiet"
+        )
+    endif()
+endfunction()
 
 function(enable_project_warnings target_name)
     if(MSVC)
@@ -144,6 +169,7 @@ target_include_directories(telecom_core
 enable_project_warnings(telecom_core)
 enable_address_sanitizer(telecom_core)
 enable_undefined_behavior_sanitizer(telecom_core)
+enable_clang_tidy(telecom_core)
 
 add_executable(TelecomSimulator
     src/main.cpp
@@ -157,6 +183,7 @@ target_link_libraries(TelecomSimulator
 enable_project_warnings(TelecomSimulator)
 enable_address_sanitizer(TelecomSimulator)
 enable_undefined_behavior_sanitizer(TelecomSimulator)
+enable_clang_tidy(TelecomSimulator)
 
 enable_testing()
 
@@ -175,6 +202,7 @@ target_link_libraries(TelecomGTests
 enable_project_warnings(TelecomGTests)
 enable_address_sanitizer(TelecomGTests)
 enable_undefined_behavior_sanitizer(TelecomGTests)
+enable_clang_tidy(TelecomGTests)
 
 include(GoogleTest)
 

@@ -25,7 +25,7 @@ int main()
     // myNetwork.printUsers();
     // std::cout << "Current User count: " << myNetwork.getUserCount() << "\n";
     // std::cout << "TWORZE NOWE POLACZENIE \n";
-    // Call firstCall(1, 1, 2);
+    Call firstCall({.callId = 1, .callerId = 1, .receiverId = 2});
     // firstCall.print();
     // std::cout << firstCall.end() << "\n";
     // std::cout << firstCall.start() << "\n";
