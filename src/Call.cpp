@@ -2,14 +2,11 @@
 
 #include <iostream>
 
-Call::Call(int callId, int callerId, int receiverId)
-    : mId(callId), mCallerId(callerId), mReceiverId(receiverId), mStatus(CallStatus::Created)
-{
-}
+Call::Call(const CallParameters &parameters) : mParameters(parameters), mStatus(CallStatus::Created) {}
 
-int Call::getId() const { return mId; }
-int Call::getCallerId() const { return mCallerId; }
-int Call::getReceiverId() const { return mReceiverId; }
+int Call::getId() const { return mParameters.callId; }
+int Call::getCallerId() const { return mParameters.callerId; }
+int Call::getReceiverId() const { return mParameters.receiverId; }
 CallStatus Call::getStatusId() const { return mStatus; }
 
 bool Call::start()

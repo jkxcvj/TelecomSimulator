@@ -6,10 +6,17 @@ enum class CallStatus
     Active = 1,
     Ended = 2
 };
+
+struct CallParameters
+{
+    int callId;
+    int callerId;
+    int receiverId;
+};
 class Call
 {
   public:
-    Call(int callId, int callerId, int receiverId);
+    explicit Call(const CallParameters &parameters);
     int getId() const;
     int getCallerId() const;
     int getReceiverId() const;
@@ -22,5 +29,6 @@ class Call
     int mId;
     int mCallerId;
     int mReceiverId;
+    CallParameters mParameters;
     CallStatus mStatus;
 };

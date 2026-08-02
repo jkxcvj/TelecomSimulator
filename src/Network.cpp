@@ -88,7 +88,7 @@ bool Network::createCall(int callId, int callerId, int receiverId)
     {
         return false;
     }
-    mCalls.emplace_back(callId, callerId, receiverId);
+    mCalls.emplace_back(CallParameters{callId, callerId, receiverId});
     return true;
 }
 

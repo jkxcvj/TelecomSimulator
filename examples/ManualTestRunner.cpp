@@ -32,24 +32,24 @@ void testUser(int &passed, int &failed)
 
 void testCall(int &passed, int &failed)
 {
-    Call createdCall(1, 1, 2);
+    Call createdCall(CallParameters{1, 1, 2});
     check(createdCall.getId() == 1, "Call has correct ID", passed, failed);
     check(createdCall.getCallerId() == 1, "Call has correct caller ID", passed, failed);
     check(createdCall.getReceiverId() == 2, "Call has correct receiver ID", passed, failed);
     check(createdCall.getStatusId() == CallStatus::Created, "Call has correct status", passed, failed);
 
-    Call callEndedBeforeStart(2, 3, 4);
+    Call callEndedBeforeStart(CallParameters{2, 3, 4});
     check(callEndedBeforeStart.end() == false, "Call doesent end before it started", passed, failed);
     check(callEndedBeforeStart.getStatusId() == CallStatus::Created, "Call didnt change status from Created", passed,
           failed);
 
-    Call activeCall(3, 5, 6);
+    Call activeCall(CallParameters{3, 5, 6});
     check(activeCall.start() == true, "Call starts properly", passed, failed);
     check(activeCall.getStatusId() == CallStatus::Active, "Call status properly changed to Active", passed, failed);
     check(activeCall.start() == false, "Call already started", passed, failed);
     check(activeCall.getStatusId() == CallStatus::Active, "Call didnt change status from Active", passed, failed);
 
-    Call endedCall(4, 7, 8);
+    Call endedCall(CallParameters{4, 7, 8});
     check(endedCall.start() == true, "Call starts properly", passed, failed);
     check(endedCall.end() == true, "Call ended properly", passed, failed);
     check(endedCall.getStatusId() == CallStatus::Ended, "Call status properly changed to Ended", passed, failed);
