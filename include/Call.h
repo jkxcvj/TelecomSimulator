@@ -26,9 +26,6 @@ class Call
     void print() const;
 
   private:
-    int mId;
-    int mCallerId;
-    int mReceiverId;
     CallParameters mParameters;
     CallStatus mStatus;
 };

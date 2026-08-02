@@ -37,9 +37,9 @@ bool Call::end()
 
 void Call::print() const
 {
-    std::cout << "Call ID: " << mId << "\n";
-    std::cout << "Caller ID: " << mCallerId << "\n";
-    std::cout << "Receiver ID: " << mReceiverId << "\n";
+    std::cout << "Call ID: " << mParameters.callId << "\n";
+    std::cout << "Caller ID: " << mParameters.callerId << "\n";
+    std::cout << "Receiver ID: " << mParameters.receiverId << "\n";
     switch (mStatus)
     {
     case CallStatus::Created:
