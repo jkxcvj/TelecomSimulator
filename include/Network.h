@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <unordered_map>
 #include <vector>
 
 #include "Call.h"
@@ -20,10 +21,9 @@ class Network
     bool endCall(int callId);
 
   private:
-    std::vector<User> mUsers;
-    std::vector<Call> mCalls;
+    std::unordered_map<int, User> mUsers;
+    std::unordered_map<int, Call> mCalls;
     bool userExists(int id) const;
-    bool callExists(int id) const;
     Call *findCall(int callId);
     const Call *findCall(int callId) const;
     bool isUserBusy(int userId) const;
