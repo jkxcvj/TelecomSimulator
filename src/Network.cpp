@@ -1,70 +1,41 @@
 #include "Network.h"
 
+#include <algorithm>
 #include <iostream>
+#include <vector>
 
 void Network::printUsers() const
 {
     if (mUsers.empty())
     {
-        std::cout << "No users in the network." << "\n";
+        std::cout << "No users in the network.\n";
         return;
     }
-    for (const auto &user : mUsers)
+
+    std::vector<int> userIds;
+    userIds.reserve(mUsers.size());
+
+    for (const auto &entry : mUsers)
     {
-        std::cout << "User ID: " << user.getId() << ", Name: " << user.getName() << "\n";
+        userIds.push_back(entry.first);
+    }
+
+    std::sort(userIds.begin(), userIds.end());
+
+    for (int id : userIds)
+    {
+        const User &user = mUsers.at(id);
+
+        std::cout << "User ID: " << id << ", Name: " << user.getName() << "\n";
     }
 }
 std::size_t Network::getUserCount() const { return mUsers.size(); }
 
-bool Network::addUser(const User &user)
-{
-    for (const auto &userInDB : mUsers)
-    {
-        if (user.getId() == userInDB.getId())
-        {
-            return false;
-        }
-    }
-    mUsers.push_back(user);
-    return true;
-}
+bool Network::addUser(const User &user) { return mUsers.emplace(user.getId(), user).second; }
 
-bool Network::removeUser(int id)
-{
-    for (auto it = mUsers.begin(); it != mUsers.end(); it++)
-    {
-        if (it->getId() == id)
-        {
-            mUsers.erase(it);
-            return true;
-        }
-    }
-    return false;
-}
+bool Network::removeUser(int id) { return mUsers.erase(id) > 0; }
 
-bool Network::userExists(int id) const
-{
-    for (const auto &userInDB : mUsers)
-    {
-        if (id == userInDB.getId())
-        {
-            return true;
-        }
-    }
-    return false;
-}
-
-bool Network::callExists(int id) const
-{
-    for (const auto &callInDB : mCalls)
-    {
-        if (id == callInDB.getId())
-        {
-            return true;
-        }
-    }
-    return false;
-}
+bool Network::userExists(int id) const { return mUsers.contains(id); }
 
 std::size_t Network::getCallCount() const { return mCalls.size(); }
 
@@ -72,52 +43,58 @@ void Network::printCalls() const
 {
     if (mCalls.empty())
     {
-        std::cout << "No calls registered in the network." << "\n";
+        std::cout << "No calls registered in the network.\n";
         return;
     }
-    for (const auto &call : mCalls)
+
+    std::vector<int> callIds;
+    callIds.reserve(mCalls.size());
+
+    for (const auto &entry : mCalls)
     {
+        callIds.push_back(entry.first);
+    }
+
+    std::sort(callIds.begin(), callIds.end());
+
+    for (int id : callIds)
+    {
+        const Call &call = mCalls.at(id);
         call.print();
     }
 }
 
 bool Network::createCall(int callId, int callerId, int receiverId)
 {
-    if ((userExists(callerId) == false) || (userExists(receiverId) == false) || (callerId == receiverId) ||
-        (callExists(callId)))
+    if ((userExists(callerId) == false) || (userExists(receiverId) == false) || (callerId == receiverId))
     {
         return false;
     }
-    mCalls.emplace_back(CallParameters{callId, callerId, receiverId});
-    return true;
+    return mCalls.try_emplace(callId, CallParameters{callId, callerId, receiverId}).second;
 }
 
 Call *Network::findCall(int callId)
 {
-    for (auto &call : mCalls)
+    auto it = mCalls.find(callId);
+    if (it != mCalls.end())
     {
-        if (call.getId() == callId)
-        {
-            return &call;
-        }
+        return &it->second;
     }
     return nullptr;
 }
 const Call *Network::findCall(int callId) const
 {
-    for (const auto &call : mCalls)
+    auto it = mCalls.find(callId);
+    if (it != mCalls.end())
     {
-        if (call.getId() == callId)
-        {
-            return &call;
-        }
+        return &it->second;
     }
     return nullptr;
 }
 
 bool Network::isUserBusy(int userId) const
 {
-    for (const auto &call : mCalls)
+    for (const auto &[id, call] : mCalls)
     {
         if ((call.getCallerId() == userId || call.getReceiverId() == userId) &&
             call.getStatusId() == CallStatus::Active)
