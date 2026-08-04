@@ -11,20 +11,20 @@ class Network
 {
   public:
     bool addUser(const User &user);
-    bool removeUser(int id);
+    bool removeUser(UserId id);
     void printUsers() const;
     std::size_t getUserCount() const;
-    bool createCall(int callId, int callerId, int receiverId);
+    bool createCall(CallId callId, UserId callerId, UserId receiverId);
     void printCalls() const;
     std::size_t getCallCount() const;
-    bool startCall(int callId);
-    bool endCall(int callId);
+    bool startCall(CallId callId);
+    bool endCall(CallId callId);
 
   private:
-    std::unordered_map<int, User> mUsers;
-    std::unordered_map<int, Call> mCalls;
-    bool userExists(int id) const;
-    Call *findCall(int callId);
-    const Call *findCall(int callId) const;
-    bool isUserBusy(int userId) const;
+    std::unordered_map<UserId, User, UserIdHash> mUsers;
+    std::unordered_map<CallId, Call, CallIdHash> mCalls;
+    bool userExists(UserId id) const;
+    Call *findCall(CallId callId);
+    const Call *findCall(CallId callId) const;
+    bool isUserBusy(UserId userId) const;
 };

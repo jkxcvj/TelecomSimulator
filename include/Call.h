@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Identifiers.h"
+
 enum class CallStatus
 {
     Created = 0,
@@ -9,17 +11,17 @@ enum class CallStatus
 
 struct CallParameters
 {
-    int callId;
-    int callerId;
-    int receiverId;
+    CallId callId;
+    UserId callerId;
+    UserId receiverId;
 };
 class Call
 {
   public:
     explicit Call(const CallParameters &parameters);
-    int getId() const;
-    int getCallerId() const;
-    int getReceiverId() const;
+    CallId getId() const;
+    UserId getCallerId() const;
+    UserId getReceiverId() const;
     CallStatus getStatusId() const;
     bool start();
     bool end();

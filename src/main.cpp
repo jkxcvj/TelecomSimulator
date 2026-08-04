@@ -19,9 +19,9 @@ int main()
               << "================================\n\n";
 
     Network network;
-    const User alice{1, "Alice Johnson", "+48 500 100 100"};
-    const User bob{2, "Bob Smith", "+48 500 200 200"};
-    const User charlie{3, "Charlie Brown", "+48 500 300 300"};
+    const User alice{UserId{1}, "Alice Johnson", "+48 500 100 100"};
+    const User bob{UserId{2}, "Bob Smith", "+48 500 200 200"};
+    const User charlie{UserId{3}, "Charlie Brown", "+48 500 300 300"};
 
     std::cout << "--- Registering users ---\n";
     printResult(network.addUser(alice), "Added user Alice with ID 1", "Could not add user Alice");
@@ -33,17 +33,17 @@ int main()
     network.printUsers();
 
     std::cout << "\n--- Call scenario ---\n";
-    printResult(network.createCall(101, alice.getId(), bob.getId()), "Created call 101 from Alice to Bob",
+    printResult(network.createCall(CallId{101}, alice.getId(), bob.getId()), "Created call 101 from Alice to Bob",
                 "Could not create call 101 from Alice to Bob");
-    printResult(network.startCall(101), "Started call 101 between Alice and Bob",
+    printResult(network.startCall(CallId{101}), "Started call 101 between Alice and Bob",
                 "Could not start call 101 between Alice and Bob");
 
-    printResult(network.createCall(102, alice.getId(), charlie.getId()), "Created call 102 from Alice to Charlie",
-                "Could not create call 102 from Alice to Charlie");
-    printResult(network.startCall(102), "Started call 102 between Alice and Charlie",
+    printResult(network.createCall(CallId{102}, alice.getId(), charlie.getId()),
+                "Created call 102 from Alice to Charlie", "Could not create call 102 from Alice to Charlie");
+    printResult(network.startCall(CallId{102}), "Started call 102 between Alice and Charlie",
                 "Could not start call 102 because Alice is already busy");
 
-    printResult(network.endCall(101), "Ended call 101 between Alice and Bob",
+    printResult(network.endCall(CallId{101}), "Ended call 101 between Alice and Bob",
                 "Could not end call 101 between Alice and Bob");
 
     std::cout << "\n--- Final call records ---\n";

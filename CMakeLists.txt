@@ -191,6 +191,7 @@ add_executable(TelecomGTests
     tests/UserTests.cpp
     tests/CallTests.cpp
     tests/NetworkTests.cpp
+    tests/IdentifierTests.cpp
 )
 
 target_link_libraries(TelecomGTests

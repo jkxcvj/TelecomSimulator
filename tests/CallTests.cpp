@@ -4,7 +4,7 @@
 
 TEST(CallTests, StartChangesStatusToActive)
 {
-    Call createdCall(CallParameters{1, 1, 2});
+    Call createdCall(CallParameters{CallId{1}, UserId{1}, UserId{2}});
 
     EXPECT_TRUE(createdCall.start());
     EXPECT_EQ(CallStatus::Active, createdCall.getStatusId());
@@ -12,7 +12,7 @@ TEST(CallTests, StartChangesStatusToActive)
 
 TEST(CallTests, EndBeforeStartIsRejectedAndKeepsCreatedStatus)
 {
-    Call createdCall(CallParameters{1, 1, 2});
+    Call createdCall(CallParameters{CallId{1}, UserId{1}, UserId{2}});
 
     EXPECT_FALSE(createdCall.end());
     EXPECT_EQ(CallStatus::Created, createdCall.getStatusId());
@@ -20,17 +20,17 @@ TEST(CallTests, EndBeforeStartIsRejectedAndKeepsCreatedStatus)
 
 TEST(CallTests, CreationStoresIdentifiersAndSetsCreatedStatus)
 {
-    Call createdCall(CallParameters{1, 2, 3});
+    Call createdCall(CallParameters{CallId{1}, UserId{2}, UserId{3}});
 
-    EXPECT_EQ(1, createdCall.getId());
-    EXPECT_EQ(2, createdCall.getCallerId());
-    EXPECT_EQ(3, createdCall.getReceiverId());
+    EXPECT_EQ(CallId{1}, createdCall.getId());
+    EXPECT_EQ(UserId{2}, createdCall.getCallerId());
+    EXPECT_EQ(UserId{3}, createdCall.getReceiverId());
     EXPECT_EQ(CallStatus::Created, createdCall.getStatusId());
 }
 
 TEST(CallTests, StartWhenAlreadyActiveIsRejectedAndKeepsActiveStatus)
 {
-    Call activeCall(CallParameters{1, 1, 2});
+    Call activeCall(CallParameters{CallId{1}, UserId{1}, UserId{2}});
     ASSERT_TRUE(activeCall.start());
 
     EXPECT_FALSE(activeCall.start());
@@ -39,7 +39,7 @@ TEST(CallTests, StartWhenAlreadyActiveIsRejectedAndKeepsActiveStatus)
 
 TEST(CallTests, EndWhenActiveSucceedsAndChangesStatusToEnded)
 {
-    Call activeCall(CallParameters{1, 1, 2});
+    Call activeCall(CallParameters{CallId{1}, UserId{1}, UserId{2}});
     ASSERT_TRUE(activeCall.start());
 
     EXPECT_TRUE(activeCall.end());
@@ -48,7 +48,7 @@ TEST(CallTests, EndWhenActiveSucceedsAndChangesStatusToEnded)
 
 TEST(CallTests, EndWhenAlreadyEndedIsRejectedAndKeepsEndedStatus)
 {
-    Call endedCall(CallParameters{1, 1, 2});
+    Call endedCall(CallParameters{CallId{1}, UserId{1}, UserId{2}});
     ASSERT_TRUE(endedCall.start());
     ASSERT_TRUE(endedCall.end());
 
@@ -58,7 +58,7 @@ TEST(CallTests, EndWhenAlreadyEndedIsRejectedAndKeepsEndedStatus)
 
 TEST(CallTests, StartAfterEndIsRejectedAndKeepsEndedStatus)
 {
-    Call endedCall(CallParameters{1, 1, 2});
+    Call endedCall(CallParameters{CallId{1}, UserId{1}, UserId{2}});
     ASSERT_TRUE(endedCall.start());
     ASSERT_TRUE(endedCall.end());
 
