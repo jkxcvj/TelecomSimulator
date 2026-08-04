@@ -21,6 +21,7 @@ The project is developed as a practical learning environment for modern C++, API
 - Validate the core network logic with automated GoogleTest tests
 - Run formatting, static analysis, compiler warnings, and sanitizers locally and in CI
 - Index users and calls by ID using `std::unordered_map`
+- Use strong `UserId` and `CallId` types to prevent accidental identifier mix-ups
 
 ## Example Output
 
@@ -295,7 +296,6 @@ The code is built as a reusable `telecom_core` static library, which is linked b
 
 Planned development modules include:
 
-- Strong types for `UserId` and `CallId`
 - RAII and ownership
 - Smart pointers and dynamic polymorphism
 - Copy and move semantics

@@ -2,18 +2,20 @@
 
 #include <string>
 
+#include "Identifiers.h"
+
 class User
 {
   public:
-    User(int id, std::string name, std::string phoneNumber);
+    User(UserId id, std::string name, std::string phoneNumber);
 
-    int getId() const;
+    UserId getId() const;
     const std::string &getName() const;
     const std::string &getPhoneNumber() const;
     void print() const;
 
   private:
-    int mId;
+    UserId mId;
     std::string mName;
     std::string mPhoneNumber;
 };

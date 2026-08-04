@@ -4,9 +4,9 @@
 
 Call::Call(const CallParameters &parameters) : mParameters(parameters), mStatus(CallStatus::Created) {}
 
-int Call::getId() const { return mParameters.callId; }
-int Call::getCallerId() const { return mParameters.callerId; }
-int Call::getReceiverId() const { return mParameters.receiverId; }
+CallId Call::getId() const { return mParameters.callId; }
+UserId Call::getCallerId() const { return mParameters.callerId; }
+UserId Call::getReceiverId() const { return mParameters.receiverId; }
 CallStatus Call::getStatusId() const { return mStatus; }
 
 bool Call::start()
@@ -37,9 +37,9 @@ bool Call::end()
 
 void Call::print() const
 {
-    std::cout << "Call ID: " << mParameters.callId << "\n";
-    std::cout << "Caller ID: " << mParameters.callerId << "\n";
-    std::cout << "Receiver ID: " << mParameters.receiverId << "\n";
+    std::cout << "Call ID: " << mParameters.callId.value << "\n";
+    std::cout << "Caller ID: " << mParameters.callerId.value << "\n";
+    std::cout << "Receiver ID: " << mParameters.receiverId.value << "\n";
     switch (mStatus)
     {
     case CallStatus::Created:

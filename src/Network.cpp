@@ -12,7 +12,7 @@ void Network::printUsers() const
         return;
     }
 
-    std::vector<int> userIds;
+    std::vector<UserId> userIds;
     userIds.reserve(mUsers.size());
 
     for (const auto &entry : mUsers)
@@ -22,20 +22,20 @@ void Network::printUsers() const
 
     std::sort(userIds.begin(), userIds.end());
 
-    for (int id : userIds)
+    for (UserId id : userIds)
     {
         const User &user = mUsers.at(id);
 
-        std::cout << "User ID: " << id << ", Name: " << user.getName() << "\n";
+        std::cout << "User ID: " << id.value << ", Name: " << user.getName() << "\n";
     }
 }
 std::size_t Network::getUserCount() const { return mUsers.size(); }
 
 bool Network::addUser(const User &user) { return mUsers.emplace(user.getId(), user).second; }
 
-bool Network::removeUser(int id) { return mUsers.erase(id) > 0; }
+bool Network::removeUser(UserId id) { return mUsers.erase(id) > 0; }
 
-bool Network::userExists(int id) const { return mUsers.contains(id); }
+bool Network::userExists(UserId id) const { return mUsers.contains(id); }
 
 std::size_t Network::getCallCount() const { return mCalls.size(); }
 
@@ -47,7 +47,7 @@ void Network::printCalls() const
         return;
     }
 
-    std::vector<int> callIds;
+    std::vector<CallId> callIds;
     callIds.reserve(mCalls.size());
 
     for (const auto &entry : mCalls)
@@ -57,14 +57,14 @@ void Network::printCalls() const
 
     std::sort(callIds.begin(), callIds.end());
 
-    for (int id : callIds)
+    for (CallId id : callIds)
     {
         const Call &call = mCalls.at(id);
         call.print();
     }
 }
 
-bool Network::createCall(int callId, int callerId, int receiverId)
+bool Network::createCall(CallId callId, UserId callerId, UserId receiverId)
 {
     if ((userExists(callerId) == false) || (userExists(receiverId) == false) || (callerId == receiverId))
     {
@@ -73,7 +73,7 @@ bool Network::createCall(int callId, int callerId, int receiverId)
     return mCalls.try_emplace(callId, CallParameters{callId, callerId, receiverId}).second;
 }
 
-Call *Network::findCall(int callId)
+Call *Network::findCall(CallId callId)
 {
     auto it = mCalls.find(callId);
     if (it != mCalls.end())
@@ -82,7 +82,7 @@ Call *Network::findCall(int callId)
     }
     return nullptr;
 }
-const Call *Network::findCall(int callId) const
+const Call *Network::findCall(CallId callId) const
 {
     auto it = mCalls.find(callId);
     if (it != mCalls.end())
@@ -92,7 +92,7 @@ const Call *Network::findCall(int callId) const
     return nullptr;
 }
 
-bool Network::isUserBusy(int userId) const
+bool Network::isUserBusy(UserId userId) const
 {
     for (const auto &[id, call] : mCalls)
     {
@@ -105,7 +105,7 @@ bool Network::isUserBusy(int userId) const
     return false;
 }
 
-bool Network::startCall(int callId)
+bool Network::startCall(CallId callId)
 {
     Call *currCall = findCall(callId);
     if (currCall == nullptr || isUserBusy(currCall->getCallerId()) || isUserBusy(currCall->getReceiverId()))
@@ -115,7 +115,7 @@ bool Network::startCall(int callId)
     return currCall->start();
 }
 
-bool Network::endCall(int callId)
+bool Network::endCall(CallId callId)
 {
     Call *currCall = findCall(callId);
     if (currCall == nullptr)
