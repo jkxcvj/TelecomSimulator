@@ -2,7 +2,17 @@
 
 #include <algorithm>
 #include <iostream>
+#include <stdexcept>
+#include <utility>
 #include <vector>
+
+Network::Network(std::unique_ptr<EventLogger> logger) : mLogger(std::move(logger))
+{
+    if (mLogger == nullptr)
+    {
+        throw std::invalid_argument("Event logger cannot be null");
+    }
+}
 
 void Network::printUsers() const
 {
@@ -31,7 +41,19 @@ void Network::printUsers() const
 }
 std::size_t Network::getUserCount() const { return mUsers.size(); }
 
-bool Network::addUser(const User &user) { return mUsers.emplace(user.getId(), user).second; }
+bool Network::addUser(const User &user)
+{
+    bool val = mUsers.emplace(user.getId(), user).second;
+    if (val)
+    {
+        mLogger->log("User registred");
+    }
+    else
+    {
+        mLogger->log("User registration rejected");
+    }
+    return val;
+}
 
 bool Network::removeUser(UserId id) { return mUsers.erase(id) > 0; }
 

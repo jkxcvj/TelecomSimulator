@@ -159,6 +159,8 @@ add_library(telecom_core
     src/User.cpp
     src/Network.cpp
     src/Call.cpp
+    src/ConsoleEventLogger.cpp
+    src/FileEventLogger.cpp
 )
 
 target_include_directories(telecom_core
@@ -192,6 +194,8 @@ add_executable(TelecomGTests
     tests/CallTests.cpp
     tests/NetworkTests.cpp
     tests/IdentifierTests.cpp
+    tests/OwnershipTests.cpp
+    tests/FileEventLogger.cpp
 )
 
 target_link_libraries(TelecomGTests
