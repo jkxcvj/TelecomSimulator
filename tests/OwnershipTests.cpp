@@ -22,11 +22,8 @@ TEST(OwnershipTests, NetworkTakesOwnershipOfLogger)
     const auto &messages = loggerObserver->getMessages();
     ASSERT_EQ(messages.size(), 2);
 
-    EXPECT_EQ(messages[0], "User registred");
+    EXPECT_EQ(messages[0], "User registered");
     EXPECT_EQ(messages[1], "User registration rejected");
 }
 
-TEST(OwnershipTests, RejectsNullLogger)
-{
-    EXPECT_THROW(Network network(std::unique_ptr<EventLogger>{}), std::invalid_argument);
-}
+TEST(OwnershipTests, RejectsNullLogger) { EXPECT_THROW(Network network(std::unique_ptr<EventLogger>{}), std::invalid_argument); }

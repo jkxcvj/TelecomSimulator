@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "Call.h"
+#include "EventDispatcher.h"
 #include "EventLogger.h"
 #include "User.h"
 
@@ -22,6 +23,8 @@ class Network
     std::size_t getCallCount() const;
     bool startCall(CallId callId);
     bool endCall(CallId callId);
+    void subscribe(const std::shared_ptr<EventSubscriber> &subscriber);
+    void unsubscribe(const std::shared_ptr<EventSubscriber> &subscriber);
 
   private:
     std::unordered_map<UserId, User, UserIdHash> mUsers;
@@ -31,4 +34,6 @@ class Network
     const Call *findCall(CallId callId) const;
     bool isUserBusy(UserId userId) const;
     std::unique_ptr<EventLogger> mLogger;
+    EventDispatcher mEventDispatcher;
+    void publishEvent(std::string_view message);
 };
