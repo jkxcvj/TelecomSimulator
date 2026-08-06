@@ -1,12 +1,14 @@
 #include <gtest/gtest.h>
+#include <memory>
 #include <string>
 
 #include "Network.h"
+#include "TestEventLogger.h"
 
 class NetworkTest : public ::testing::Test
 {
   protected:
-    Network mNetwork;
+    Network mNetwork = makeNetwork();
     User mFirstUser{UserId{1}, "John Doe", "123-456-7890"};
     User mSecondUser{UserId{2}, "Johnny Doesony", "123-456-7777"};
     User mThirdUser{UserId{3}, "Johnini Doesini", "123-456-9999"};
@@ -35,7 +37,7 @@ class InvalidCallCreationTest : public NetworkTest, public ::testing::WithParamI
 
 TEST(NetworkStandaloneTests, NewlyConstructedNetworkHasNoUsers)
 {
-    Network emptyNetwork;
+    Network emptyNetwork = makeNetwork();
 
     EXPECT_EQ(0, emptyNetwork.getUserCount());
 }

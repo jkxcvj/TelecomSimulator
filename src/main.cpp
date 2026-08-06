@@ -1,6 +1,9 @@
 #include <iostream>
+#include <memory>
 #include <string_view>
 
+#include "ConsoleEventLogger.h"
+#include "FileEventLogger.h"
 #include "Network.h"
 #include "User.h"
 
@@ -18,7 +21,7 @@ int main()
               << "      TELECOM SIMULATOR\n"
               << "================================\n\n";
 
-    Network network;
+    Network network(std::make_unique<FileEventLogger>("telecom-events.log"));
     const User alice{UserId{1}, "Alice Johnson", "+48 500 100 100"};
     const User bob{UserId{2}, "Bob Smith", "+48 500 200 200"};
     const User charlie{UserId{3}, "Charlie Brown", "+48 500 300 300"};

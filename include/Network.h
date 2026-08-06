@@ -1,15 +1,18 @@
 #pragma once
 
 #include <cstddef>
+#include <memory>
 #include <unordered_map>
 #include <vector>
 
 #include "Call.h"
+#include "EventLogger.h"
 #include "User.h"
 
 class Network
 {
   public:
+    explicit Network(std::unique_ptr<EventLogger> logger);
     bool addUser(const User &user);
     bool removeUser(UserId id);
     void printUsers() const;
@@ -27,4 +30,5 @@ class Network
     Call *findCall(CallId callId);
     const Call *findCall(CallId callId) const;
     bool isUserBusy(UserId userId) const;
+    std::unique_ptr<EventLogger> mLogger;
 };
