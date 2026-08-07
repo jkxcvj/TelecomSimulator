@@ -38,22 +38,19 @@ int main()
     std::cout << "\n--- Call scenario ---\n";
     printResult(network.createCall(CallId{101}, alice.getId(), bob.getId()), "Created call 101 from Alice to Bob",
                 "Could not create call 101 from Alice to Bob");
-    printResult(network.startCall(CallId{101}), "Started call 101 between Alice and Bob",
-                "Could not start call 101 between Alice and Bob");
+    printResult(network.startCall(CallId{101}), "Started call 101 between Alice and Bob", "Could not start call 101 between Alice and Bob");
 
-    printResult(network.createCall(CallId{102}, alice.getId(), charlie.getId()),
-                "Created call 102 from Alice to Charlie", "Could not create call 102 from Alice to Charlie");
+    printResult(network.createCall(CallId{102}, alice.getId(), charlie.getId()), "Created call 102 from Alice to Charlie",
+                "Could not create call 102 from Alice to Charlie");
     printResult(network.startCall(CallId{102}), "Started call 102 between Alice and Charlie",
                 "Could not start call 102 because Alice is already busy");
 
-    printResult(network.endCall(CallId{101}), "Ended call 101 between Alice and Bob",
-                "Could not end call 101 between Alice and Bob");
+    printResult(network.endCall(CallId{101}), "Ended call 101 between Alice and Bob", "Could not end call 101 between Alice and Bob");
 
     std::cout << "\n--- Final call records ---\n";
     network.printCalls();
 
-    std::cout << "\nDemo completed. Registered users: " << network.getUserCount()
-              << ", call records: " << network.getCallCount() << '\n';
+    std::cout << "\nDemo completed. Registered users: " << network.getUserCount() << ", call records: " << network.getCallCount() << '\n';
 
     return 0;
 }

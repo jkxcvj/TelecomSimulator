@@ -3,7 +3,7 @@ IndentWidth: 4
 TabWidth: 4
 UseTab: Never
 BreakBeforeBraces: Allman
-ColumnLimit: 120
+ColumnLimit: 150
 SortIncludes: true
 IncludeBlocks: Regroup
 

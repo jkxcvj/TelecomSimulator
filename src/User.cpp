@@ -2,10 +2,7 @@
 
 #include <iostream>
 
-User::User(UserId id, std::string name, std::string phoneNumber)
-    : mId(id), mName(std::move(name)), mPhoneNumber(std::move(phoneNumber))
-{
-}
+User::User(UserId id, std::string name, std::string phoneNumber) : mId(id), mName(std::move(name)), mPhoneNumber(std::move(phoneNumber)) {}
 
 UserId User::getId() const { return mId; }
 

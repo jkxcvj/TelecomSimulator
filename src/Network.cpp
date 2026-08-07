@@ -46,11 +46,11 @@ bool Network::addUser(const User &user)
     bool val = mUsers.emplace(user.getId(), user).second;
     if (val)
     {
-        mLogger->log("User registred");
+        publishEvent("User registered");
     }
     else
     {
-        mLogger->log("User registration rejected");
+        publishEvent("User registration rejected");
     }
     return val;
 }
@@ -90,8 +90,10 @@ bool Network::createCall(CallId callId, UserId callerId, UserId receiverId)
 {
     if ((userExists(callerId) == false) || (userExists(receiverId) == false) || (callerId == receiverId))
     {
+        publishEvent("Call creation rejected");
         return false;
     }
+    publishEvent("Call created");
     return mCalls.try_emplace(callId, CallParameters{callId, callerId, receiverId}).second;
 }
 
@@ -118,8 +120,7 @@ bool Network::isUserBusy(UserId userId) const
 {
     for (const auto &[id, call] : mCalls)
     {
-        if ((call.getCallerId() == userId || call.getReceiverId() == userId) &&
-            call.getStatusId() == CallStatus::Active)
+        if ((call.getCallerId() == userId || call.getReceiverId() == userId) && call.getStatusId() == CallStatus::Active)
         {
             return true;
         }
@@ -132,8 +133,10 @@ bool Network::startCall(CallId callId)
     Call *currCall = findCall(callId);
     if (currCall == nullptr || isUserBusy(currCall->getCallerId()) || isUserBusy(currCall->getReceiverId()))
     {
+        publishEvent("Call start rejected");
         return false;
     }
+    publishEvent("Call started");
     return currCall->start();
 }
 
@@ -142,7 +145,18 @@ bool Network::endCall(CallId callId)
     Call *currCall = findCall(callId);
     if (currCall == nullptr)
     {
+        publishEvent("Call end rejected");
         return false;
     }
+    publishEvent("Call ended");
     return currCall->end();
+}
+
+void Network::subscribe(const std::shared_ptr<EventSubscriber> &subscriber) { mEventDispatcher.subscribe(subscriber); }
+void Network::unsubscribe(const std::shared_ptr<EventSubscriber> &subscriber) { mEventDispatcher.unsubscribe(subscriber); }
+
+void Network::publishEvent(std::string_view message)
+{
+    mLogger->log(message);
+    mEventDispatcher.notify(message);
 }
