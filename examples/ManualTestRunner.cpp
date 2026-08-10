@@ -114,20 +114,21 @@ void testNetworkCallControl(int &passed, int &failed)
     callControlNetwork.createCall(12, 3, 4);
     check(callControlNetwork.getCallCount() == 3, "Network contains 3 calls before call control tests", passed, failed);
     check(callControlNetwork.getUserCount() == 4, "Network contains 4 users before call control tests", passed, failed);
-    check(callControlNetwork.startCall(999) == false, "Starting call with invalid ID", passed, failed);
-    check(callControlNetwork.startCall(999) == false, "Starting call with invalid ID", passed, failed);
+    check(!std::holds_alternative<std::monostate>(callControlNetwork.startCall(999)), "Starting call with invalid ID", passed, failed);
+    check(!std::holds_alternative<std::monostate>(callControlNetwork.startCall(999)), "Starting call with invalid ID", passed, failed);
     check(callControlNetwork.endCall(999) == false, "Ending call with invalid ID", passed, failed);
-    check(callControlNetwork.startCall(10) == true, "Starting call with ID = 10", passed, failed);
-    check(callControlNetwork.startCall(10) == false, "Starting call with ID = 10 again - rejected", passed, failed);
-    check(callControlNetwork.startCall(11) == false, "Starting call with ID = 11 - rejected", passed, failed);
-    check(callControlNetwork.startCall(12) == true, "Starting call with ID = 12", passed, failed);
+    check(std::holds_alternative<std::monostate>(callControlNetwork.startCall(10)), "Starting call with ID = 10", passed, failed);
+    check(!std::holds_alternative<std::monostate>(callControlNetwork.startCall(10)), "Starting call with ID = 10 again - rejected", passed, failed);
+    check(!std::holds_alternative<std::monostate>(callControlNetwork.startCall(11)), "Starting call with ID = 11 - rejected", passed, failed);
+    check(std::holds_alternative<std::monostate>(callControlNetwork.startCall(12)), "Starting call with ID = 12", passed, failed);
     check(callControlNetwork.endCall(10) == true, "Ending call with ID = 10", passed, failed);
     check(callControlNetwork.endCall(10) == false, "Ending call with ID = 10 again - rejected", passed, failed);
-    check(callControlNetwork.startCall(11) == false, "Starting call with ID = 11 again - rejected", passed, failed);
+    check(!std::holds_alternative<std::monostate>(callControlNetwork.startCall(11)), "Starting call with ID = 11 again - rejected", passed, failed);
     check(callControlNetwork.endCall(12) == true, "Ending call with ID = 12", passed, failed);
-    check(callControlNetwork.startCall(11) == true, "Starting call with ID = 11 for third time", passed, failed);
+    check(std::holds_alternative<std::monostate>(callControlNetwork.startCall(11)), "Starting call with ID = 11 for third time", passed, failed);
     check(callControlNetwork.endCall(11) == true, "Ending call with ID = 11", passed, failed);
-    check(callControlNetwork.startCall(11) == false, "Starting call with ID = 11 for the fourth time - rejected", passed, failed);
+    check(!std::holds_alternative<std::monostate>(callControlNetwork.startCall(11)), "Starting call with ID = 11 for the fourth time - rejected",
+          passed, failed);
     check(callControlNetwork.getCallCount() == 3, "Call amount after all operations stays the same", passed, failed);
 }
 

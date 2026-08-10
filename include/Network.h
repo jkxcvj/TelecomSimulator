@@ -3,12 +3,25 @@
 #include <cstddef>
 #include <memory>
 #include <unordered_map>
+#include <variant>
 #include <vector>
 
 #include "Call.h"
 #include "EventDispatcher.h"
 #include "EventLogger.h"
 #include "User.h"
+
+enum class StartCallError
+{
+    CallNotFound,
+    CallAlreadyStarted,
+    CallAlreadyEnded,
+    UserBusy
+};
+
+using StartCallResult = std::variant<std::monostate, StartCallError>;
+
+std::string_view toString(StartCallError error);
 
 class Network
 {
@@ -21,7 +34,7 @@ class Network
     bool createCall(CallId callId, UserId callerId, UserId receiverId);
     void printCalls() const;
     std::size_t getCallCount() const;
-    bool startCall(CallId callId);
+    StartCallResult startCall(CallId callId);
     bool endCall(CallId callId);
     void subscribe(const std::shared_ptr<EventSubscriber> &subscriber);
     void unsubscribe(const std::shared_ptr<EventSubscriber> &subscriber);
