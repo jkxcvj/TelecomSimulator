@@ -6,6 +6,22 @@
 #include <utility>
 #include <vector>
 
+std::string_view toString(StartCallError error)
+{
+    switch (error)
+    {
+    case StartCallError::CallNotFound:
+        return "Call not found";
+    case StartCallError::CallAlreadyStarted:
+        return "Call already started";
+    case StartCallError::CallAlreadyEnded:
+        return "Call already ended";
+    case StartCallError::UserBusy:
+        return "User busy";
+    }
+    return "Unknown start call error";
+}
+
 Network::Network(std::unique_ptr<EventLogger> logger) : mLogger(std::move(logger))
 {
     if (mLogger == nullptr)
@@ -128,16 +144,38 @@ bool Network::isUserBusy(UserId userId) const
     return false;
 }
 
-bool Network::startCall(CallId callId)
+StartCallResult Network::startCall(CallId callId)
 {
     Call *currCall = findCall(callId);
-    if (currCall == nullptr || isUserBusy(currCall->getCallerId()) || isUserBusy(currCall->getReceiverId()))
+
+    if (currCall == nullptr)
     {
         publishEvent("Call start rejected");
-        return false;
+        return StartCallError::CallNotFound;
     }
+
+    if (currCall->getStatusId() == CallStatus::Active)
+    {
+        publishEvent("Call start rejected");
+        return StartCallError::CallAlreadyStarted;
+    }
+
+    if (currCall->getStatusId() == CallStatus::Ended)
+    {
+        publishEvent("Call start rejected");
+        return StartCallError::CallAlreadyEnded;
+    }
+
+    if (isUserBusy(currCall->getCallerId()) || isUserBusy(currCall->getReceiverId()))
+    {
+        publishEvent("Call start rejected");
+        return StartCallError::UserBusy;
+    }
+
+    currCall->start();
     publishEvent("Call started");
-    return currCall->start();
+
+    return std::monostate{};
 }
 
 bool Network::endCall(CallId callId)

@@ -200,6 +200,7 @@ add_executable(TelecomGTests
     tests/FileEventLogger.cpp
     tests/EventDispatcherTests.cpp
     tests/SpecialMemberTests.cpp
+    tests/ExceptionSafetyTests.cpp
 )
 
 target_link_libraries(TelecomGTests

@@ -105,8 +105,8 @@ TEST_F(NetworkTest, IndependentCallsCanWorkConcurrently)
     EXPECT_EQ(0, mNetwork.getCallCount());
     ASSERT_TRUE(mNetwork.createCall(CallId{10}, UserId{1}, UserId{2}));
     ASSERT_TRUE(mNetwork.createCall(CallId{11}, UserId{3}, UserId{4}));
-    ASSERT_TRUE(mNetwork.startCall(CallId{10}));
-    ASSERT_TRUE(mNetwork.startCall(CallId{11}));
+    ASSERT_TRUE(std::holds_alternative<std::monostate>(mNetwork.startCall(CallId{10})));
+    ASSERT_TRUE(std::holds_alternative<std::monostate>(mNetwork.startCall(CallId{11})));
     EXPECT_EQ(2, mNetwork.getCallCount());
 }
 TEST_F(NetworkTest, UserBecomesFreeAfterEndingCall)
@@ -116,11 +116,12 @@ TEST_F(NetworkTest, UserBecomesFreeAfterEndingCall)
     ASSERT_TRUE(mNetwork.createCall(CallId{11}, UserId{2}, UserId{3}));
     {
         SCOPED_TRACE("Start call 10");
-        ASSERT_TRUE(mNetwork.startCall(CallId{10}));
+        ASSERT_TRUE(std::holds_alternative<std::monostate>(mNetwork.startCall(CallId{10})));
     }
     {
         SCOPED_TRACE("Call 11 is rejected");
-        ASSERT_FALSE(mNetwork.startCall(CallId{11}));
+        const auto result = mNetwork.startCall(CallId{11});
+        ASSERT_FALSE(std::holds_alternative<std::monostate>(result));
     }
     {
         SCOPED_TRACE("End call 10");
@@ -128,7 +129,7 @@ TEST_F(NetworkTest, UserBecomesFreeAfterEndingCall)
     }
     {
         SCOPED_TRACE("Start call 11 after user 2 becomes free");
-        EXPECT_TRUE(mNetwork.startCall(CallId{11}));
+        EXPECT_TRUE(std::holds_alternative<std::monostate>(mNetwork.startCall(CallId{11})));
     }
 }
 
@@ -137,20 +138,23 @@ TEST_F(NetworkTest, CallRemainsBlockedUntilBothUsersAreFree)
     ASSERT_TRUE(mNetwork.createCall(CallId{10}, UserId{1}, UserId{2}));
     ASSERT_TRUE(mNetwork.createCall(CallId{11}, UserId{2}, UserId{3}));
     ASSERT_TRUE(mNetwork.createCall(CallId{12}, UserId{3}, UserId{4}));
-    ASSERT_TRUE(mNetwork.startCall(CallId{10}));
-    ASSERT_TRUE(mNetwork.startCall(CallId{12}));
+    ASSERT_TRUE(std::holds_alternative<std::monostate>(mNetwork.startCall(CallId{10})));
+    ASSERT_TRUE(std::holds_alternative<std::monostate>(mNetwork.startCall(CallId{12})));
     ASSERT_TRUE(mNetwork.endCall(CallId{10}));
 
-    EXPECT_FALSE(mNetwork.startCall(CallId{11}));
+    const auto result2 = mNetwork.startCall(CallId{11});
+
+    EXPECT_FALSE(std::holds_alternative<std::monostate>(result2));
 
     ASSERT_TRUE(mNetwork.endCall(CallId{12}));
-    EXPECT_TRUE(mNetwork.startCall(CallId{11}));
+    EXPECT_TRUE(std::holds_alternative<std::monostate>(mNetwork.startCall(CallId{11})));
 }
 
 TEST_F(NetworkTest, NonexistentCallIdIsRejected)
 {
     EXPECT_EQ(0, mNetwork.getCallCount());
-    EXPECT_FALSE(mNetwork.startCall(CallId{999}));
+    const auto result = mNetwork.startCall(CallId{11});
+    EXPECT_EQ(std::get<StartCallError>(result), StartCallError::CallNotFound);
     EXPECT_FALSE(mNetwork.endCall(CallId{999}));
     EXPECT_EQ(0, mNetwork.getCallCount());
 }
@@ -159,11 +163,13 @@ TEST_F(NetworkTest, CallLifecycleRejectsInvalidStateTransitions)
 {
     EXPECT_EQ(0, mNetwork.getCallCount());
     ASSERT_TRUE(mNetwork.createCall(CallId{10}, UserId{1}, UserId{2}));
-    ASSERT_TRUE(mNetwork.startCall(CallId{10}));
-    EXPECT_FALSE(mNetwork.startCall(CallId{10}));
+    ASSERT_TRUE(std::holds_alternative<std::monostate>(mNetwork.startCall(CallId{10})));
+    const auto result = mNetwork.startCall(CallId{10});
+    EXPECT_EQ(std::get<StartCallError>(result), StartCallError::CallAlreadyStarted);
     ASSERT_TRUE(mNetwork.endCall(CallId{10}));
     EXPECT_FALSE(mNetwork.endCall(CallId{10}));
-    EXPECT_FALSE(mNetwork.startCall(CallId{10}));
+    const auto result2 = mNetwork.startCall(CallId{10});
+    EXPECT_EQ(std::get<StartCallError>(result2), StartCallError::CallAlreadyEnded);
     EXPECT_EQ(1, mNetwork.getCallCount());
 }
 
@@ -233,7 +239,7 @@ TEST(NetworkTests, PublishesEventWhenCallIsStarted)
     ASSERT_TRUE(network.createCall(CallId{1}, UserId{1}, UserId{2}));
     const auto messageCountBeforeOperation = subscriber->getMessages().size();
 
-    ASSERT_TRUE(network.startCall(CallId{1}));
+    ASSERT_TRUE(std::holds_alternative<std::monostate>(network.startCall(CallId{1})));
 
     const auto messages = subscriber->getMessages();
     ASSERT_EQ(messages.size(), messageCountBeforeOperation + 1);
@@ -249,7 +255,7 @@ TEST(NetworkTests, PublishesEventWhenCallIsEnded)
     ASSERT_TRUE(network.addUser(User{UserId{1}, "Caller", "111-111-1111"}));
     ASSERT_TRUE(network.addUser(User{UserId{2}, "Receiver", "222-222-2222"}));
     ASSERT_TRUE(network.createCall(CallId{1}, UserId{1}, UserId{2}));
-    ASSERT_TRUE(network.startCall(CallId{1}));
+    ASSERT_TRUE(std::holds_alternative<std::monostate>(network.startCall(CallId{1})));
     const auto messageCountBeforeOperation = subscriber->getMessages().size();
 
     ASSERT_TRUE(network.endCall(CallId{1}));
@@ -273,4 +279,11 @@ TEST(NetworkTests, PublishesEventWhenCallCreationIsRejected)
     const auto messages = subscriber->getMessages();
     ASSERT_EQ(messages.size(), messageCountBeforeOperation + 1);
     EXPECT_EQ(messages.back(), "Call creation rejected");
+}
+
+TEST(StartCallErrorTests, ConvertsErrorToString)
+{
+    EXPECT_EQ(toString(StartCallError::CallNotFound), "Call not found");
+
+    EXPECT_EQ(toString(StartCallError::UserBusy), "User busy");
 }
