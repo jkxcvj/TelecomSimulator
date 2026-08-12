@@ -287,3 +287,80 @@ TEST(StartCallErrorTests, ConvertsErrorToString)
 
     EXPECT_EQ(toString(StartCallError::UserBusy), "User busy");
 }
+
+TEST_F(NetworkTest, AmountOfCalls)
+{
+    ASSERT_TRUE(mNetwork.createCall(CallId{10}, UserId{1}, UserId{2}));
+    mNetwork.startCall(CallId{10});
+    EXPECT_EQ(mNetwork.getActiveCallCount(), 1);
+}
+
+TEST_F(NetworkTest, RemovesOnlyEndedCalls)
+{
+    ASSERT_TRUE(mNetwork.createCall(CallId{10}, UserId{1}, UserId{2}));
+    ASSERT_TRUE(mNetwork.createCall(CallId{11}, UserId{1}, UserId{2}));
+    ASSERT_TRUE(mNetwork.createCall(CallId{12}, UserId{1}, UserId{2}));
+
+    ASSERT_TRUE(std::holds_alternative<std::monostate>(mNetwork.startCall(CallId{10})));
+
+    ASSERT_TRUE(mNetwork.endCall(CallId{10}));
+
+    ASSERT_TRUE(std::holds_alternative<std::monostate>(mNetwork.startCall(CallId{11})));
+
+    EXPECT_EQ(mNetwork.removeEndedCalls(), 1);
+    EXPECT_EQ(mNetwork.getCallCount(), 2);
+
+    const auto callIds = mNetwork.getCallIds();
+
+    EXPECT_EQ(std::find(callIds.begin(), callIds.end(), CallId{10}), callIds.end());
+
+    EXPECT_NE(std::find(callIds.begin(), callIds.end(), CallId{11}), callIds.end());
+
+    EXPECT_NE(std::find(callIds.begin(), callIds.end(), CallId{12}), callIds.end());
+}
+
+TEST_F(NetworkTest, ReturnsUserIdsSortedByName)
+{
+    ASSERT_TRUE(mNetwork.addUser(User{UserId{100}, "Charlie", "+48 500 100 100"}));
+
+    ASSERT_TRUE(mNetwork.addUser(User{UserId{101}, "Alice", "+48 500 200 200"}));
+
+    ASSERT_TRUE(mNetwork.addUser(User{UserId{102}, "Bob", "+48 500 300 300"}));
+
+    const auto userIds = mNetwork.getUserIdsSortedByName();
+
+    const auto aliceIt = std::find(userIds.begin(), userIds.end(), UserId{101});
+
+    const auto bobIt = std::find(userIds.begin(), userIds.end(), UserId{102});
+
+    const auto charlieIt = std::find(userIds.begin(), userIds.end(), UserId{100});
+
+    ASSERT_NE(aliceIt, userIds.end());
+    ASSERT_NE(bobIt, userIds.end());
+    ASSERT_NE(charlieIt, userIds.end());
+
+    EXPECT_LT(aliceIt, bobIt);
+    EXPECT_LT(bobIt, charlieIt);
+}
+
+TEST_F(NetworkTest, ReturnsUsersWithoutActiveCallsSortedById)
+{
+    ASSERT_TRUE(mNetwork.addUser(User{UserId{100}, "Alice", "+48 500 100 100"}));
+    ASSERT_TRUE(mNetwork.addUser(User{UserId{101}, "Bob", "+48 500 200 200"}));
+    ASSERT_TRUE(mNetwork.addUser(User{UserId{102}, "Charlie", "+48 500 300 300"}));
+    ASSERT_TRUE(mNetwork.addUser(User{UserId{103}, "David", "+48 500 400 400"}));
+
+    ASSERT_TRUE(mNetwork.createCall(CallId{1000}, UserId{100}, UserId{101}));
+    ASSERT_TRUE(std::holds_alternative<std::monostate>(mNetwork.startCall(CallId{1000})));
+    ASSERT_TRUE(mNetwork.createCall(CallId{1001}, UserId{102}, UserId{103}));
+    ASSERT_TRUE(std::holds_alternative<std::monostate>(mNetwork.startCall(CallId{1001})));
+    ASSERT_TRUE(mNetwork.endCall(CallId{1001}));
+
+    const auto result = mNetwork.getUsersWithoutActiveCalls();
+
+    EXPECT_EQ(std::find(result.begin(), result.end(), UserId{100}), result.end());
+    EXPECT_EQ(std::find(result.begin(), result.end(), UserId{101}), result.end());
+    EXPECT_NE(std::find(result.begin(), result.end(), UserId{102}), result.end());
+    EXPECT_NE(std::find(result.begin(), result.end(), UserId{103}), result.end());
+    EXPECT_TRUE(std::is_sorted(result.begin(), result.end()));
+}
