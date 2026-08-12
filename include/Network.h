@@ -38,6 +38,13 @@ class Network
     bool endCall(CallId callId);
     void subscribe(const std::shared_ptr<EventSubscriber> &subscriber);
     void unsubscribe(const std::shared_ptr<EventSubscriber> &subscriber);
+    std::size_t getActiveCallCount() const;
+    std::vector<CallId> getCallIds() const;
+    std::size_t removeEndedCalls();
+    std::vector<UserId> getUserIdsSortedByName() const;
+    bool areAllCallsEnded() const;
+    bool hasNoActiveCalls() const;
+    std::vector<UserId> getUsersWithoutActiveCalls() const;
 
   private:
     std::unordered_map<UserId, User, UserIdHash> mUsers;
