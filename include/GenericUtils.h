@@ -12,10 +12,10 @@ template <LessThanComparable T> T largerOf(T left, T right) { return left < righ
 template <typename T> class Box
 {
   public:
-    explicit Box(T value) : mValue(value) {};
+    explicit Box(T value) : mValue(value) {}
 
-    const T &get() const { return mValue; };
-    void set(T value) { mValue = value; };
+    const T &get() const { return mValue; }
+    void set(T value) { mValue = value; }
 
   private:
     T mValue;

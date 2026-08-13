@@ -5,8 +5,7 @@
 #include <unordered_map>
 #include <utility>
 
-template <typename Id, typename Value, std::size_t MaxSize, typename Hash = std::hash<Id>>
-class LimitedRegistry
+template <typename Id, typename Value, std::size_t MaxSize, typename Hash = std::hash<Id>> class LimitedRegistry
 {
   public:
     bool add(Id id, Value value)
