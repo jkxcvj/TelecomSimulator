@@ -202,6 +202,9 @@ add_executable(TelecomGTests
     tests/SpecialMemberTests.cpp
     tests/ExceptionSafetyTests.cpp
     tests/IteratorTests.cpp
+    tests/TemplateTests.cpp
+    tests/RegistryTests.cpp
+    tests/LimitedRegistryTests.cpp
 )
 
 target_link_libraries(TelecomGTests
