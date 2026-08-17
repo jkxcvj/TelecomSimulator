@@ -53,7 +53,7 @@ class MessagePublisher
     void subscribe(const std::shared_ptr<MessageObserver> &observer) { observers.emplace_back(observer); }
     void publish(std::string_view message)
     {
-        for (auto observer : observers)
+        for (auto &observer : observers)
         {
             if (auto subscriber = observer.lock())
             {
@@ -69,7 +69,7 @@ class MessagePublisher
 class RecordingObserver : public MessageObserver
 {
   public:
-    void onMessage(std::string_view message) { mLastMessage = message; }
+    void onMessage(std::string_view message) override { mLastMessage = message; }
     const std::string &getLastMessage() const { return mLastMessage; }
 
   private:
