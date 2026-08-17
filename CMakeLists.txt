@@ -205,6 +205,7 @@ add_executable(TelecomGTests
     tests/TemplateTests.cpp
     tests/RegistryTests.cpp
     tests/LimitedRegistryTests.cpp
+    tests/DesignPatternsTests.cpp
 )
 
 target_link_libraries(TelecomGTests
