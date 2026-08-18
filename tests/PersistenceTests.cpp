@@ -238,10 +238,13 @@ TEST(PersistenceTests, SavesNetworkToFile)
 
     ASSERT_TRUE(content.has_value());
 
+    if (!content.has_value())
+    {
+        return;
+    }
+
     EXPECT_NE(content->find("USER|1|Alice|123456789"), std::string::npos);
-
     EXPECT_NE(content->find("USER|2|Bob|987654321"), std::string::npos);
-
     EXPECT_NE(content->find("CALL|100|1|2|Created"), std::string::npos);
 
     std::filesystem::remove_all(dir);
