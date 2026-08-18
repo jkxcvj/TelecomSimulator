@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "Call.h"
+#include "CallStatistics.h"
 #include "EventDispatcher.h"
 #include "EventLogger.h"
 #include "User.h"
@@ -26,7 +27,7 @@ std::string_view toString(StartCallError error);
 class Network
 {
   public:
-    explicit Network(std::unique_ptr<EventLogger> logger);
+    explicit Network(std::unique_ptr<EventLogger> logger, CallStatistics &statistics);
     bool addUser(const User &user);
     bool removeUser(UserId id);
     void printUsers() const;
@@ -56,4 +57,5 @@ class Network
     std::unique_ptr<EventLogger> mLogger;
     EventDispatcher mEventDispatcher;
     void publishEvent(std::string_view message);
+    CallStatistics &mStatistics;
 };

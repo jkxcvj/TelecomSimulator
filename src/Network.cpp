@@ -23,7 +23,7 @@ std::string_view toString(StartCallError error)
     return "Unknown start call error";
 }
 
-Network::Network(std::unique_ptr<EventLogger> logger) : mLogger(std::move(logger))
+Network::Network(std::unique_ptr<EventLogger> logger, CallStatistics &statistics) : mLogger(std::move(logger)), mStatistics(statistics)
 {
     if (mLogger == nullptr)
     {
@@ -111,6 +111,7 @@ bool Network::createCall(CallId callId, UserId callerId, UserId receiverId)
         return false;
     }
     publishEvent("Call created");
+    mStatistics.recordCreated();
     return mCalls.try_emplace(callId, CallParameters{callId, callerId, receiverId}).second;
 }
 
@@ -173,6 +174,7 @@ StartCallResult Network::startCall(CallId callId)
 
     currCall->start();
     publishEvent("Call started");
+    mStatistics.recordStarted();
 
     return std::monostate{};
 }
@@ -186,6 +188,7 @@ bool Network::endCall(CallId callId)
         return false;
     }
     publishEvent("Call ended");
+    mStatistics.recordEnded();
     return currCall->end();
 }
 
