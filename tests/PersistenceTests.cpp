@@ -82,7 +82,13 @@ TEST(PersistenceTests, SavesAndLoadsText)
     const auto loaded = loadText(filePath);
 
     ASSERT_TRUE(loaded.has_value());
-    EXPECT_EQ(loaded.value(), expected);
+
+    if (!loaded.has_value())
+    {
+        return;
+    }
+
+    EXPECT_EQ(*loaded, expected);
 
     std::filesystem::remove_all(dir);
 }
@@ -111,6 +117,11 @@ TEST(PersistenceTests, DeserializesUser)
     const auto user = deserializeUser("USER|1|Alice|123456789");
 
     ASSERT_TRUE(user.has_value());
+
+    if (!user.has_value())
+    {
+        return;
+    }
 
     EXPECT_EQ(user->getId(), UserId{1});
     EXPECT_EQ(user->getName(), "Alice");
@@ -184,6 +195,11 @@ TEST(PersistenceTests, DeserializesCall)
     const auto call = deserializeCall("CALL|100|1|2|Active");
 
     ASSERT_TRUE(call.has_value());
+
+    if (!call.has_value())
+    {
+        return;
+    }
 
     EXPECT_EQ(call->getId(), CallId{100});
     EXPECT_EQ(call->getCallerId(), UserId{1});
