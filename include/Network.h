@@ -46,6 +46,9 @@ class Network
     bool areAllCallsEnded() const;
     bool hasNoActiveCalls() const;
     std::vector<UserId> getUsersWithoutActiveCalls() const;
+    const User *getUser(UserId id) const;
+    const Call *getCall(CallId id) const;
+    bool restoreCall(const Call &call);
 
   private:
     std::unordered_map<UserId, User, UserIdHash> mUsers;
