@@ -5,6 +5,7 @@
 #include <iostream>
 #include <mutex>
 #include <queue>
+#include <stop_token>
 #include <string>
 
 struct BankAccount
@@ -61,7 +62,7 @@ struct MessageQueue
     std::condition_variable condition;
 };
 
-void produce(MessageQueue &queue, std::string message)
+void produce(MessageQueue &queue, const std::string &message)
 {
     {
         std::lock_guard<std::mutex> lock(queue.mutex);
@@ -79,7 +80,7 @@ std::string consume(MessageQueue &queue)
     return message;
 }
 
-void runUntilStopped(std::stop_token stopToken, std::atomic<int> &counter)
+void runUntilStopped(const std::stop_token &stopToken, std::atomic<int> &counter)
 {
     while (stopToken.stop_requested() == false)
     {
