@@ -3,6 +3,7 @@
 #include <iostream>
 
 Call::Call(const CallParameters &parameters) : mParameters(parameters), mStatus(CallStatus::Created) {}
+Call::Call(const CallParameters &parameters, CallStatus status) : mParameters(parameters), mStatus(status) {}
 
 CallId Call::getId() const { return mParameters.callId; }
 UserId Call::getCallerId() const { return mParameters.callerId; }

@@ -115,6 +115,13 @@ bool Network::createCall(CallId callId, UserId callerId, UserId receiverId)
     return mCalls.try_emplace(callId, CallParameters{callId, callerId, receiverId}).second;
 }
 
+bool Network::restoreCall(const Call &call)
+{
+    publishEvent("Call restored");
+    mStatistics.recordCreated();
+    return mCalls.try_emplace(call.getId(), CallParameters{call.getId(), call.getCallerId(), call.getReceiverId()}, call.getStatusId()).second;
+}
+
 Call *Network::findCall(CallId callId)
 {
     auto it = mCalls.find(callId);
@@ -256,4 +263,18 @@ std::vector<UserId> Network::getUsersWithoutActiveCalls() const
     std::sort(availableUserIds.begin(), availableUserIds.end());
 
     return availableUserIds;
+}
+
+const Call *Network::getCall(CallId id) const { return findCall(id); }
+
+const User *Network::getUser(UserId id) const
+{
+    const auto it = mUsers.find(id);
+
+    if (it == mUsers.end())
+    {
+        return nullptr;
+    }
+
+    return &it->second;
 }

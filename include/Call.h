@@ -19,6 +19,7 @@ class Call
 {
   public:
     explicit Call(const CallParameters &parameters);
+    Call(const CallParameters &parameters, CallStatus status);
     CallId getId() const;
     UserId getCallerId() const;
     UserId getReceiverId() const;
