@@ -48,7 +48,8 @@ int run()
               << "      TELECOM SIMULATOR\n"
               << "================================\n\n";
 
-    Network network(std::make_unique<FileEventLogger>("telecom-events.log"));
+    CallStatistics statistics;
+    Network network(std::make_unique<FileEventLogger>("telecom-events.log"), statistics);
 
     const User alice{UserId{1}, "Alice Johnson", "+48 500 100 100"};
 
