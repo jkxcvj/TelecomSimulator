@@ -6,6 +6,45 @@
 #include "PersistenceUtils.h"
 #include "TestEventLogger.h"
 
+TEST(PersistenceErrorTests, ConvertsDeserializeErrorsToStrings)
+{
+    EXPECT_EQ(deserializeUserErrorToString(DeserializeUserError::InvalidFieldCount), "Invalid user field count");
+    EXPECT_EQ(deserializeUserErrorToString(DeserializeUserError::InvalidPrefix), "Invalid user prefix");
+    EXPECT_EQ(deserializeUserErrorToString(DeserializeUserError::InvalidId), "Invalid user ID");
+    EXPECT_EQ(deserializeCallErrorToString(DeserializeCallError::InvalidFieldCount), "Invalid call field count");
+    EXPECT_EQ(deserializeCallErrorToString(DeserializeCallError::InvalidPrefix), "Invalid call prefix");
+    EXPECT_EQ(deserializeCallErrorToString(DeserializeCallError::InvalidId), "Invalid call ID");
+    EXPECT_EQ(deserializeCallErrorToString(DeserializeCallError::InvalidStatus), "Invalid call status");
+}
+
+TEST(PersistenceErrorTests, ConvertsLoadNetworkErrorsToStrings)
+{
+    EXPECT_EQ(loadNetworkErrorToString(LoadNetworkError::FileOpenFailed), "Failed to open network file");
+    EXPECT_EQ(loadNetworkErrorToString(LoadNetworkError::InvalidRecordType), "Invalid network record type");
+    EXPECT_EQ(loadNetworkErrorToString(LoadNetworkError::InvalidUser), "Invalid user record");
+    EXPECT_EQ(loadNetworkErrorToString(LoadNetworkError::InvalidCall), "Invalid call record");
+    EXPECT_EQ(loadNetworkErrorToString(LoadNetworkError::DuplicateUser), "Duplicate user");
+    EXPECT_EQ(loadNetworkErrorToString(LoadNetworkError::DuplicateCall), "Duplicate call");
+    EXPECT_EQ(loadNetworkErrorToString(LoadNetworkError::MissingReferencedUser), "Call references a missing user");
+    EXPECT_EQ(loadNetworkErrorToString(LoadNetworkError::FileReadError), "Failed to read network file");
+    EXPECT_EQ(loadNetworkErrorToString(LoadNetworkError::AddUsersError), "Failed to add users to the network");
+    EXPECT_EQ(loadNetworkErrorToString(LoadNetworkError::AddCallsError), "Failed to add calls to the network");
+}
+
+TEST(PersistenceErrorTests, FormatsLoadNetworkFailureWithLineAndNestedError)
+{
+    const LoadNetworkFailure failure{LoadNetworkError::InvalidCall, 7, std::nullopt, DeserializeCallError::InvalidStatus};
+
+    EXPECT_EQ(loadNetworkFailureToString(failure), "Invalid call record at line 7: Invalid call status");
+}
+
+TEST(PersistenceErrorTests, OmitsUnavailableLoadNetworkFailureDetails)
+{
+    const LoadNetworkFailure failure{LoadNetworkError::FileOpenFailed, 0, std::nullopt, std::nullopt};
+
+    EXPECT_EQ(loadNetworkFailureToString(failure), "Failed to open network file");
+}
+
 TEST(PersistenceTests, CreatesDirectoryWhenItDoesNotExist)
 {
     const std::filesystem::path path = "test_data/new_directory";
@@ -114,46 +153,46 @@ TEST(PersistenceTests, SerializesUser)
 
 TEST(PersistenceTests, DeserializesUser)
 {
-    const auto user = deserializeUser("USER|1|Alice|123456789");
+    const auto result = deserializeUser("USER|1|Alice|123456789");
 
-    ASSERT_TRUE(user.has_value());
+    ASSERT_TRUE(std::holds_alternative<User>(result));
+    const auto &user = std::get<User>(result);
 
-    if (!user.has_value())
-    {
-        return;
-    }
-
-    EXPECT_EQ(user->getId(), UserId{1});
-    EXPECT_EQ(user->getName(), "Alice");
-    EXPECT_EQ(user->getPhoneNumber(), "123456789");
+    EXPECT_EQ(user.getId(), UserId{1});
+    EXPECT_EQ(user.getName(), "Alice");
+    EXPECT_EQ(user.getPhoneNumber(), "123456789");
 }
 
 TEST(PersistenceTests, RejectsUserWithWrongPrefix)
 {
-    const auto user = deserializeUser("CALL|1|Alice|123456789");
+    const auto result = deserializeUser("CALL|1|Alice|123456789");
 
-    EXPECT_FALSE(user.has_value());
+    ASSERT_TRUE(std::holds_alternative<DeserializeUserError>(result));
+    EXPECT_EQ(DeserializeUserError::InvalidPrefix, std::get<DeserializeUserError>(result));
 }
 
 TEST(PersistenceTests, RejectsUserWithInvalidId)
 {
-    const auto user = deserializeUser("USER|abc|Alice|123456789");
+    const auto result = deserializeUser("USER|abc|Alice|123456789");
 
-    EXPECT_FALSE(user.has_value());
+    ASSERT_TRUE(std::holds_alternative<DeserializeUserError>(result));
+    EXPECT_EQ(DeserializeUserError::InvalidId, std::get<DeserializeUserError>(result));
 }
 
 TEST(PersistenceTests, RejectsUserWithMissingFields)
 {
-    const auto user = deserializeUser("USER|1|Alice");
+    const auto result = deserializeUser("USER|1|Alice");
 
-    EXPECT_FALSE(user.has_value());
+    ASSERT_TRUE(std::holds_alternative<DeserializeUserError>(result));
+    EXPECT_EQ(DeserializeUserError::InvalidFieldCount, std::get<DeserializeUserError>(result));
 }
 
 TEST(PersistenceTests, RejectsUserWithExtraFields)
 {
-    const auto user = deserializeUser("USER|1|Alice|123456789|EXTRA");
+    const auto result = deserializeUser("USER|1|Alice|123456789|EXTRA");
 
-    EXPECT_FALSE(user.has_value());
+    ASSERT_TRUE(std::holds_alternative<DeserializeUserError>(result));
+    EXPECT_EQ(DeserializeUserError::InvalidFieldCount, std::get<DeserializeUserError>(result));
 }
 
 TEST(PersistenceTests, ConvertsCallStatusToString)
@@ -192,26 +231,56 @@ TEST(PersistenceTests, SerializesActiveCall)
 
 TEST(PersistenceTests, DeserializesCall)
 {
-    const auto call = deserializeCall("CALL|100|1|2|Active");
+    const auto result = deserializeCall("CALL|100|1|2|Active");
 
-    ASSERT_TRUE(call.has_value());
+    ASSERT_TRUE(std::holds_alternative<Call>(result));
+    const auto &call = std::get<Call>(result);
 
-    if (!call.has_value())
-    {
-        return;
-    }
-
-    EXPECT_EQ(call->getId(), CallId{100});
-    EXPECT_EQ(call->getCallerId(), UserId{1});
-    EXPECT_EQ(call->getReceiverId(), UserId{2});
-    EXPECT_EQ(call->getStatusId(), CallStatus::Active);
+    EXPECT_EQ(call.getId(), CallId{100});
+    EXPECT_EQ(call.getCallerId(), UserId{1});
+    EXPECT_EQ(call.getReceiverId(), UserId{2});
+    EXPECT_EQ(call.getStatusId(), CallStatus::Active);
 }
 
-TEST(PersistenceTests, RejectsCallWithInvalidStatus) { EXPECT_FALSE(deserializeCall("CALL|100|1|2|Flying").has_value()); }
+TEST(PersistenceTests, RejectsCallWithInvalidStatus)
+{
+    const auto result = deserializeCall("CALL|100|1|2|Flying");
 
-TEST(PersistenceTests, RejectsCallWithInvalidId) { EXPECT_FALSE(deserializeCall("CALL|abc|1|2|Created").has_value()); }
+    ASSERT_TRUE(std::holds_alternative<DeserializeCallError>(result));
+    EXPECT_EQ(DeserializeCallError::InvalidStatus, std::get<DeserializeCallError>(result));
+}
 
-TEST(PersistenceTests, RejectsCallWithExtraFields) { EXPECT_FALSE(deserializeCall("CALL|100|1|2|Created|EXTRA").has_value()); }
+TEST(PersistenceTests, RejectsCallWithInvalidId)
+{
+    const auto result = deserializeCall("CALL|abc|1|2|Created");
+
+    ASSERT_TRUE(std::holds_alternative<DeserializeCallError>(result));
+    EXPECT_EQ(DeserializeCallError::InvalidId, std::get<DeserializeCallError>(result));
+}
+
+TEST(PersistenceTests, RejectsCallWithExtraFields)
+{
+    const auto result = deserializeCall("CALL|100|1|2|Created|EXTRA");
+
+    ASSERT_TRUE(std::holds_alternative<DeserializeCallError>(result));
+    EXPECT_EQ(DeserializeCallError::InvalidFieldCount, std::get<DeserializeCallError>(result));
+}
+
+TEST(PersistenceTests, RejectsCallWithMissingFields)
+{
+    const auto result = deserializeCall("CALL|100|1|2");
+
+    ASSERT_TRUE(std::holds_alternative<DeserializeCallError>(result));
+    EXPECT_EQ(DeserializeCallError::InvalidFieldCount, std::get<DeserializeCallError>(result));
+}
+
+TEST(PersistenceTests, RejectsCallWithInvalidPrefix)
+{
+    const auto result = deserializeCall("USER|100|1|2|Created");
+
+    ASSERT_TRUE(std::holds_alternative<DeserializeCallError>(result));
+    EXPECT_EQ(DeserializeCallError::InvalidPrefix, std::get<DeserializeCallError>(result));
+}
 
 TEST(PersistenceTests, SavesNetworkToFile)
 {
@@ -230,7 +299,7 @@ TEST(PersistenceTests, SavesNetworkToFile)
 
     ASSERT_TRUE(network.addUser(User(UserId{2}, "Bob", "987654321")));
 
-    ASSERT_TRUE(network.createCall(CallId{100}, UserId{1}, UserId{2}));
+    ASSERT_TRUE(std::holds_alternative<std::monostate>(network.createCall(CallId{100}, UserId{1}, UserId{2})));
 
     ASSERT_TRUE(saveNetwork(network, filePath));
 
@@ -267,7 +336,8 @@ TEST(PersistenceTests, LoadsNetworkFromFile)
 
     Network network(std::move(logger), statistics);
 
-    ASSERT_TRUE(loadNetwork(network, filePath));
+    const auto loadResult = loadNetwork(network, filePath);
+    ASSERT_TRUE(std::holds_alternative<std::monostate>(loadResult));
 
     EXPECT_EQ(network.getUserCount(), 2);
     EXPECT_EQ(network.getCallCount(), 1);
@@ -297,7 +367,12 @@ TEST(PersistenceTests, InvalidFileDoesNotPartiallyModifyNetwork)
     auto logger = std::make_unique<SilentEventLogger>();
     Network network(std::move(logger), statistics);
 
-    EXPECT_FALSE(loadNetwork(network, filePath));
+    const auto loadResult = loadNetwork(network, filePath);
+    ASSERT_TRUE(std::holds_alternative<LoadNetworkFailure>(loadResult));
+    const auto &failure = std::get<LoadNetworkFailure>(loadResult);
+    EXPECT_EQ(LoadNetworkError::InvalidCall, failure.error);
+    EXPECT_EQ(4, failure.lineNumber);
+    EXPECT_EQ(failure.callError, std::optional{DeserializeCallError::InvalidId});
 
     EXPECT_EQ(network.getUserCount(), 0);
     EXPECT_EQ(network.getCallCount(), 0);
@@ -322,7 +397,9 @@ TEST(PersistenceTests, ExistingUserConflictDoesNotPartiallyModifyNetwork)
 
     ASSERT_TRUE(network.addUser(User(UserId{2}, "Existing", "111111111")));
 
-    EXPECT_FALSE(loadNetwork(network, filePath));
+    const auto loadResult = loadNetwork(network, filePath);
+    ASSERT_TRUE(std::holds_alternative<LoadNetworkFailure>(loadResult));
+    EXPECT_EQ(LoadNetworkError::DuplicateUser, std::get<LoadNetworkFailure>(loadResult).error);
 
     EXPECT_EQ(network.getUserCount(), 1);
     EXPECT_EQ(network.getUser(UserId{1}), nullptr);
@@ -346,7 +423,9 @@ TEST(PersistenceTests, DuplicateUserInFileDoesNotModifyNetwork)
     auto logger = std::make_unique<SilentEventLogger>();
     Network network(std::move(logger), statistics);
 
-    EXPECT_FALSE(loadNetwork(network, filePath));
+    const auto loadResult = loadNetwork(network, filePath);
+    ASSERT_TRUE(std::holds_alternative<LoadNetworkFailure>(loadResult));
+    EXPECT_EQ(LoadNetworkError::DuplicateUser, std::get<LoadNetworkFailure>(loadResult).error);
 
     EXPECT_EQ(network.getUserCount(), 0);
 
@@ -368,7 +447,9 @@ TEST(PersistenceTests, RejectsCallReferencingMissingUser)
     auto logger = std::make_unique<SilentEventLogger>();
     Network network(std::move(logger), statistics);
 
-    EXPECT_FALSE(loadNetwork(network, filePath));
+    const auto loadResult = loadNetwork(network, filePath);
+    ASSERT_TRUE(std::holds_alternative<LoadNetworkFailure>(loadResult));
+    EXPECT_EQ(LoadNetworkError::MissingReferencedUser, std::get<LoadNetworkFailure>(loadResult).error);
 
     EXPECT_EQ(network.getUserCount(), 0);
     EXPECT_EQ(network.getCallCount(), 0);
@@ -392,7 +473,7 @@ TEST(PersistenceTests, SavesAndLoadsWholeNetwork)
 
     ASSERT_TRUE(original.addUser(User(UserId{2}, "Bob", "987654321")));
 
-    ASSERT_TRUE(original.createCall(CallId{100}, UserId{1}, UserId{2}));
+    ASSERT_TRUE(std::holds_alternative<std::monostate>(original.createCall(CallId{100}, UserId{1}, UserId{2})));
 
     const auto startResult = original.startCall(CallId{100});
 
@@ -404,7 +485,8 @@ TEST(PersistenceTests, SavesAndLoadsWholeNetwork)
     auto logger2 = std::make_unique<SilentEventLogger>();
     Network loaded(std::move(logger2), statistics2);
 
-    ASSERT_TRUE(loadNetwork(loaded, filePath));
+    const auto loadResult = loadNetwork(loaded, filePath);
+    ASSERT_TRUE(std::holds_alternative<std::monostate>(loadResult));
 
     EXPECT_EQ(loaded.getUserCount(), 2);
     EXPECT_EQ(loaded.getCallCount(), 1);
@@ -425,4 +507,186 @@ TEST(PersistenceTests, SavesAndLoadsWholeNetwork)
     EXPECT_EQ(call->getStatusId(), CallStatus::Active);
 
     std::filesystem::remove_all(dir);
+}
+
+TEST(PersistenceTests, DeserializeUserReturnsUser)
+{
+    const auto result = deserializeUser("USER|1|Alice|123456789");
+
+    ASSERT_TRUE(std::holds_alternative<User>(result));
+
+    const auto &user = std::get<User>(result);
+
+    EXPECT_EQ(user.getId(), UserId{1});
+    EXPECT_EQ(user.getName(), "Alice");
+    EXPECT_EQ(user.getPhoneNumber(), "123456789");
+}
+
+TEST(PersistenceTests, DeserializeUserReturnsInvalidPrefix)
+{
+    const auto result = deserializeUser("CALL|1|Alice|123456789");
+
+    ASSERT_TRUE(std::holds_alternative<DeserializeUserError>(result));
+
+    EXPECT_EQ(std::get<DeserializeUserError>(result), DeserializeUserError::InvalidPrefix);
+}
+
+TEST(PersistenceTests, DeserializeUserReturnsInvalidId)
+{
+    const auto result = deserializeUser("USER|abc|Alice|123456789");
+
+    ASSERT_TRUE(std::holds_alternative<DeserializeUserError>(result));
+
+    EXPECT_EQ(std::get<DeserializeUserError>(result), DeserializeUserError::InvalidId);
+}
+TEST(PersistenceTests, DeserializeUserReturnsInvalidFieldCount)
+{
+    const auto result = deserializeUser("USER|1|Alice");
+
+    ASSERT_TRUE(std::holds_alternative<DeserializeUserError>(result));
+
+    EXPECT_EQ(std::get<DeserializeUserError>(result), DeserializeUserError::InvalidFieldCount);
+}
+
+TEST(PersistenceTests, LoadNetworkReturnsInvalidRecordType)
+{
+    const std::filesystem::path path = "test_data/invalid_type.txt";
+
+    std::filesystem::create_directories("test_data");
+
+    ASSERT_TRUE(saveText(path, "SOMETHING|1|2|3\n"));
+
+    CallStatistics statistics;
+    auto logger = std::make_unique<SilentEventLogger>();
+    Network network(std::move(logger), statistics);
+
+    const auto result = loadNetwork(network, path);
+
+    ASSERT_TRUE(std::holds_alternative<LoadNetworkFailure>(result));
+    const auto &failure = std::get<LoadNetworkFailure>(result);
+    EXPECT_EQ(failure.error, LoadNetworkError::InvalidRecordType);
+    EXPECT_EQ(failure.lineNumber, 1);
+
+    std::filesystem::remove_all("test_data");
+}
+
+TEST(PersistenceTests, LoadNetworkReturnsInvalidUser)
+{
+    const std::filesystem::path path = "test_data/invalid_user.txt";
+
+    std::filesystem::create_directories("test_data");
+
+    ASSERT_TRUE(saveText(path, "USER|abc|Alice|123\n"));
+
+    CallStatistics statistics;
+    auto logger = std::make_unique<SilentEventLogger>();
+    Network network(std::move(logger), statistics);
+
+    const auto result = loadNetwork(network, path);
+
+    ASSERT_TRUE(std::holds_alternative<LoadNetworkFailure>(result));
+    const auto &failure = std::get<LoadNetworkFailure>(result);
+    EXPECT_EQ(failure.error, LoadNetworkError::InvalidUser);
+    EXPECT_EQ(failure.lineNumber, 1);
+    EXPECT_EQ(failure.userError, std::optional{DeserializeUserError::InvalidId});
+
+    std::filesystem::remove_all("test_data");
+}
+
+TEST(PersistenceTests, LoadNetworkPreservesUserParsingErrorAndLineNumber)
+{
+    const std::filesystem::path path = "test_data/invalid_user_details.txt";
+
+    std::filesystem::create_directories("test_data");
+
+    ASSERT_TRUE(saveText(path, "USER|1|Alice|111\n"
+                               "USER|2|Bob|222\n"
+                               "USER|abc|Charlie|333\n"));
+
+    CallStatistics statistics;
+    auto logger = std::make_unique<SilentEventLogger>();
+    Network network(std::move(logger), statistics);
+
+    const auto result = loadNetwork(network, path);
+
+    ASSERT_TRUE(std::holds_alternative<LoadNetworkFailure>(result));
+
+    const auto &failure = std::get<LoadNetworkFailure>(result);
+
+    EXPECT_EQ(failure.error, LoadNetworkError::InvalidUser);
+
+    EXPECT_EQ(failure.lineNumber, 3);
+
+    EXPECT_EQ(failure.userError, std::optional{DeserializeUserError::InvalidId});
+
+    std::filesystem::remove_all("test_data");
+}
+
+TEST(PersistenceTests, LoadNetworkPreservesInvalidUserPrefix)
+{
+    const std::filesystem::path path = "test_data/invalid_user_prefix.txt";
+
+    std::filesystem::create_directories("test_data");
+
+    ASSERT_TRUE(saveText(path, "USER|1|Alice|111\n"
+                               "CALLX|2|Bob|222\n"));
+
+    CallStatistics statistics;
+    auto logger = std::make_unique<SilentEventLogger>();
+    Network network(std::move(logger), statistics);
+
+    const auto result = loadNetwork(network, path);
+
+    ASSERT_TRUE(std::holds_alternative<LoadNetworkFailure>(result));
+
+    const auto &failure = std::get<LoadNetworkFailure>(result);
+
+    EXPECT_EQ(failure.lineNumber, 2);
+    EXPECT_EQ(failure.error, LoadNetworkError::InvalidRecordType);
+
+    EXPECT_FALSE(failure.userError.has_value());
+
+    std::filesystem::remove_all("test_data");
+}
+
+TEST(PersistenceTests, LoadNetworkFileOpenFailureHasNoLineNumber)
+{
+    CallStatistics statistics;
+    auto logger = std::make_unique<SilentEventLogger>();
+    Network network(std::move(logger), statistics);
+
+    const auto result = loadNetwork(network, "does_not_exist.txt");
+
+    ASSERT_TRUE(std::holds_alternative<LoadNetworkFailure>(result));
+
+    const auto &failure = std::get<LoadNetworkFailure>(result);
+
+    EXPECT_EQ(failure.error, LoadNetworkError::FileOpenFailed);
+
+    EXPECT_EQ(failure.lineNumber, 0);
+    EXPECT_FALSE(failure.userError.has_value());
+}
+
+TEST(PersistenceTests, LoadTextOrThrowReturnsContent)
+{
+    const std::filesystem::path dir = "test_data";
+    const std::filesystem::path path = dir / "text.txt";
+
+    std::filesystem::remove_all(dir);
+    std::filesystem::create_directories(dir);
+
+    ASSERT_TRUE(saveText(path, "Hello"));
+
+    EXPECT_EQ(loadTextOrThrow(path), "Hello");
+
+    std::filesystem::remove_all(dir);
+}
+
+TEST(PersistenceTests, LoadTextOrThrowThrowsWhenFileDoesNotExist)
+{
+    const std::filesystem::path path = "test_data/missing.txt";
+
+    std::filesystem::remove_all("test_data");
+
+    EXPECT_THROW(loadTextOrThrow(path), std::runtime_error);
 }
