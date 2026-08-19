@@ -103,16 +103,42 @@ void Network::printCalls() const
     }
 }
 
-bool Network::createCall(CallId callId, UserId callerId, UserId receiverId)
+CreateCallResult Network::createCall(CallId callId, UserId callerId, UserId receiverId)
 {
-    if ((userExists(callerId) == false) || (userExists(receiverId) == false) || (callerId == receiverId))
+    if ((findCall(callId) != nullptr))
     {
-        publishEvent("Call creation rejected");
-        return false;
+        publishEvent("Call creation rejected, call already exist");
+        return CreateCallError::CallAlreadyExists;
+    }
+    else if (!userExists(callerId))
+    {
+        publishEvent("Call creation rejected, caller dont exist");
+        return CreateCallError::CallerNotFound;
+    }
+    else if (!userExists(receiverId))
+    {
+        publishEvent("Call creation rejected, receiver dont exist");
+        return CreateCallError::ReceiverNotFound;
+    }
+    else if (callerId == receiverId)
+    {
+        publishEvent("Receiver cant be the same person as caller");
+        return CreateCallError::SameUser;
+    }
+    else if (isUserBusy(callerId))
+    {
+        publishEvent("Call creation rejected, caller is busy");
+        return CreateCallError::CallerBusy;
+    }
+    else if (isUserBusy(receiverId))
+    {
+        publishEvent("Call creation rejected, receiver is busy");
+        return CreateCallError::ReceiverBusy;
     }
     publishEvent("Call created");
     mStatistics.recordCreated();
-    return mCalls.try_emplace(callId, CallParameters{callId, callerId, receiverId}).second;
+    mCalls.try_emplace(callId, CallParameters{callId, callerId, receiverId});
+    return std::monostate{};
 }
 
 bool Network::restoreCall(const Call &call)
@@ -277,4 +303,16 @@ const User *Network::getUser(UserId id) const
     }
 
     return &it->second;
+}
+
+GetCallResult Network::getCallResult(CallId id) const
+{
+    const Call *call = findCall(id);
+
+    if (call == nullptr)
+    {
+        return GetCallError::NotFound;
+    }
+
+    return std::cref(*call);
 }
