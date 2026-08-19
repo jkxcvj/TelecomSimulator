@@ -40,11 +40,6 @@ void printStartCallResult(const StartCallResult &result, std::string_view succes
     std::cout << "[ERROR] Cannot start call: " << toString(error) << '\n';
 }
 
-void printCreateCallResult(const CreateCallResult &result, ResultMessages messages)
-{
-    printResult(std::holds_alternative<std::monostate>(result), messages);
-}
-
 } // namespace
 
 int run()
@@ -78,13 +73,13 @@ int run()
 
     std::cout << "\n--- Call scenario ---\n";
 
-    printCreateCallResult(network.createCall(CallId{101}, alice.getId(), bob.getId()),
-                          {.success = "Created call 101 from Alice to Bob", .failure = "Could not create call 101 from Alice to Bob"});
+    printResult(network.createCall(CallId{101}, alice.getId(), bob.getId()),
+                {.success = "Created call 101 from Alice to Bob", .failure = "Could not create call 101 from Alice to Bob"});
 
     printStartCallResult(network.startCall(CallId{101}), "Started call 101 between Alice and Bob");
 
-    printCreateCallResult(network.createCall(CallId{102}, alice.getId(), charlie.getId()),
-                          {.success = "Created call 102 from Alice to Charlie", .failure = "Could not create call 102 from Alice to Charlie"});
+    printResult(network.createCall(CallId{102}, alice.getId(), charlie.getId()),
+                {.success = "Created call 102 from Alice to Charlie", .failure = "Could not create call 102 from Alice to Charlie"});
 
     printStartCallResult(network.startCall(CallId{102}), "Started call 102 between Alice and Charlie");
 

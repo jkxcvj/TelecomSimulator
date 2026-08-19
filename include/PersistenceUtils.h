@@ -4,132 +4,9 @@
 #include <fstream>
 #include <string>
 #include <unordered_set>
-#include <variant>
 
 #include "Call.h"
 #include "User.h"
-
-enum class LoadNetworkError
-{
-    FileOpenFailed,
-    InvalidRecordType,
-    InvalidUser,
-    InvalidCall,
-    DuplicateUser,
-    DuplicateCall,
-    MissingReferencedUser,
-    FileReadError,
-    AddUsersError,
-    AddCallsError
-};
-
-enum class DeserializeUserError
-{
-    InvalidFieldCount,
-    InvalidPrefix,
-    InvalidId
-};
-
-enum class DeserializeCallError
-{
-    InvalidFieldCount,
-    InvalidPrefix,
-    InvalidId,
-    InvalidStatus
-};
-
-struct LoadNetworkFailure
-{
-    LoadNetworkError error;
-    std::size_t lineNumber{0};
-
-    std::optional<DeserializeUserError> userError;
-    std::optional<DeserializeCallError> callError;
-};
-
-inline std::string deserializeUserErrorToString(DeserializeUserError error)
-{
-    switch (error)
-    {
-    case DeserializeUserError::InvalidFieldCount:
-        return "Invalid user field count";
-    case DeserializeUserError::InvalidPrefix:
-        return "Invalid user prefix";
-    case DeserializeUserError::InvalidId:
-        return "Invalid user ID";
-    }
-    return "Unknown user deserialization error";
-}
-
-inline std::string deserializeCallErrorToString(DeserializeCallError error)
-{
-    switch (error)
-    {
-    case DeserializeCallError::InvalidFieldCount:
-        return "Invalid call field count";
-    case DeserializeCallError::InvalidPrefix:
-        return "Invalid call prefix";
-    case DeserializeCallError::InvalidId:
-        return "Invalid call ID";
-    case DeserializeCallError::InvalidStatus:
-        return "Invalid call status";
-    }
-    return "Unknown call deserialization error";
-}
-
-inline std::string loadNetworkErrorToString(LoadNetworkError error)
-{
-    switch (error)
-    {
-    case LoadNetworkError::FileOpenFailed:
-        return "Failed to open network file";
-    case LoadNetworkError::InvalidRecordType:
-        return "Invalid network record type";
-    case LoadNetworkError::InvalidUser:
-        return "Invalid user record";
-    case LoadNetworkError::InvalidCall:
-        return "Invalid call record";
-    case LoadNetworkError::DuplicateUser:
-        return "Duplicate user";
-    case LoadNetworkError::DuplicateCall:
-        return "Duplicate call";
-    case LoadNetworkError::MissingReferencedUser:
-        return "Call references a missing user";
-    case LoadNetworkError::FileReadError:
-        return "Failed to read network file";
-    case LoadNetworkError::AddUsersError:
-        return "Failed to add users to the network";
-    case LoadNetworkError::AddCallsError:
-        return "Failed to add calls to the network";
-    }
-    return "Unknown network loading error";
-}
-
-inline std::string loadNetworkFailureToString(const LoadNetworkFailure &failure)
-{
-    std::string message = loadNetworkErrorToString(failure.error);
-
-    if (failure.lineNumber != 0)
-    {
-        message += " at line " + std::to_string(failure.lineNumber);
-    }
-
-    if (failure.userError.has_value())
-    {
-        message += ": " + deserializeUserErrorToString(failure.userError.value());
-    }
-
-    if (failure.callError.has_value())
-    {
-        message += ": " + deserializeCallErrorToString(failure.callError.value());
-    }
-
-    return message;
-}
-
-using DeserializeUserResult = std::variant<User, DeserializeUserError>;
-using DeserializeCallResult = std::variant<Call, DeserializeCallError>;
-using LoadNetworkResult = std::variant<std::monostate, LoadNetworkFailure>;
 
 bool ensureDirectoryExists(const std::filesystem::path &path)
 {
@@ -181,7 +58,7 @@ std::string serializeUser(const User &user)
     return stream.str();
 }
 
-DeserializeUserResult deserializeUser(const std::string &text)
+std::optional<User> deserializeUser(const std::string &text)
 {
     std::istringstream stream(text);
 
@@ -192,19 +69,19 @@ DeserializeUserResult deserializeUser(const std::string &text)
 
     if (!std::getline(stream, type, '|') || !std::getline(stream, id, '|') || !std::getline(stream, name, '|') || !std::getline(stream, phone, '|'))
     {
-        return DeserializeUserError::InvalidFieldCount;
+        return std::nullopt;
     }
 
     std::string extra;
 
     if (std::getline(stream, extra, '|'))
     {
-        return DeserializeUserError::InvalidFieldCount;
+        return std::nullopt;
     }
 
     if (type != "USER")
     {
-        return DeserializeUserError::InvalidPrefix;
+        return std::nullopt;
     }
 
     try
@@ -214,7 +91,7 @@ DeserializeUserResult deserializeUser(const std::string &text)
     }
     catch (const std::exception &)
     {
-        return DeserializeUserError::InvalidId;
+        return std::nullopt;
     }
 }
 
@@ -260,7 +137,7 @@ std::string serializeCall(const Call &call)
     return stream.str();
 }
 
-DeserializeCallResult deserializeCall(const std::string &text)
+std::optional<Call> deserializeCall(const std::string &text)
 {
     std::istringstream stream(text);
 
@@ -273,19 +150,19 @@ DeserializeCallResult deserializeCall(const std::string &text)
     if (!std::getline(stream, type, '|') || !std::getline(stream, id, '|') || !std::getline(stream, callerId, '|') ||
         !std::getline(stream, receiverId, '|') || !std::getline(stream, callstatus, '|'))
     {
-        return DeserializeCallError::InvalidFieldCount;
+        return std::nullopt;
     }
 
     std::string extra;
 
     if (std::getline(stream, extra, '|'))
     {
-        return DeserializeCallError::InvalidFieldCount;
+        return std::nullopt;
     }
 
     if (type != "CALL")
     {
-        return DeserializeCallError::InvalidPrefix;
+        return std::nullopt;
     }
     try
     {
@@ -296,7 +173,7 @@ DeserializeCallResult deserializeCall(const std::string &text)
 
         if (!status.has_value())
         {
-            return DeserializeCallError::InvalidStatus;
+            return std::nullopt;
         }
 
         CallStatus callSTS = status.value();
@@ -304,7 +181,7 @@ DeserializeCallResult deserializeCall(const std::string &text)
     }
     catch (const std::exception &)
     {
-        return DeserializeCallError::InvalidId;
+        return std::nullopt;
     }
 }
 
@@ -339,57 +216,54 @@ bool saveNetwork(const Network &network, const std::filesystem::path &path)
     return saveText(path, output.str());
 }
 
-LoadNetworkResult loadNetwork(Network &network, const std::filesystem::path &path)
+bool loadNetwork(Network &network, const std::filesystem::path &path)
 {
     std::ifstream file(path);
 
     std::vector<User> users;
     std::vector<Call> calls;
-    std::size_t lineNumber = 0;
+
     if (file.is_open() == false)
     {
-        return LoadNetworkFailure{LoadNetworkError::FileOpenFailed, 0, std::nullopt, std::nullopt};
+        return false;
     }
     std::string line;
 
     while (std::getline(file, line))
     {
-        ++lineNumber;
         std::istringstream stream(line);
         std::string type;
         if (!std::getline(stream, type, '|'))
         {
-            return LoadNetworkFailure{LoadNetworkError::InvalidRecordType, lineNumber, std::nullopt, std::nullopt};
+            return false;
         }
         if (type == "CALL")
         {
-            auto result = deserializeCall(line);
-            if (!std::holds_alternative<Call>(result))
+            auto call = deserializeCall(line);
+            if (!call.has_value())
             {
-                return LoadNetworkFailure{LoadNetworkError::InvalidCall, lineNumber, std::nullopt, std::get<DeserializeCallError>(result)};
+                return false;
             }
-            calls.push_back(std::get<Call>(result));
+            calls.push_back(call.value());
         }
         else if (type == "USER")
         {
-            auto result = deserializeUser(line);
-            if (!std::holds_alternative<User>(result))
+            auto user = deserializeUser(line);
+            if (!user.has_value())
             {
-                return LoadNetworkFailure{LoadNetworkError::InvalidUser, lineNumber, std::get<DeserializeUserError>(result), std::nullopt};
+                return false;
             }
-            users.push_back(std::get<User>(result));
+            users.push_back(user.value());
         }
         else
         {
-            return LoadNetworkFailure{LoadNetworkError::InvalidRecordType, lineNumber, std::nullopt, std::nullopt};
+            return false;
         }
     }
-
     if (file.bad())
     {
-        return LoadNetworkFailure{LoadNetworkError::FileReadError, 0, std::nullopt, std::nullopt};
+        return false;
     }
-
     std::unordered_set<UserId, UserIdHash> userIds;
     std::unordered_set<CallId, CallIdHash> callIds;
 
@@ -397,36 +271,43 @@ LoadNetworkResult loadNetwork(Network &network, const std::filesystem::path &pat
     {
         const UserId id = user.getId();
 
-        if ((network.getUser(id) != nullptr) || (userIds.insert(id).second == false))
+        if (network.getUser(id) != nullptr)
         {
-            return LoadNetworkFailure{LoadNetworkError::DuplicateUser, 0, std::nullopt, std::nullopt};
+            return false;
+        }
+
+        if (userIds.insert(id).second == false)
+        {
+            return false;
         }
     }
-
     for (const auto &call : calls)
     {
         const CallId id = call.getId();
 
-        if ((network.getCall(id) != nullptr) || (callIds.insert(id).second == false))
+        if (network.getCall(id) != nullptr)
         {
-            return LoadNetworkFailure{LoadNetworkError::DuplicateCall, 0, std::nullopt, std::nullopt};
+            return false;
         }
 
+        if (callIds.insert(id).second == false)
+        {
+            return false;
+        }
         const UserId callerId = call.getCallerId();
         const UserId receiverId = call.getReceiverId();
         const bool callerExists = network.getUser(callerId) != nullptr || userIds.contains(callerId);
         const bool receiverExists = network.getUser(receiverId) != nullptr || userIds.contains(receiverId);
         if (!callerExists || !receiverExists)
         {
-            return LoadNetworkFailure{LoadNetworkError::MissingReferencedUser, 0, std::nullopt, std::nullopt};
+            return false;
         }
     }
-
     for (const auto &user : users)
     {
         if (!network.addUser(user))
         {
-            return LoadNetworkFailure{LoadNetworkError::AddUsersError, 0, std::nullopt, std::nullopt};
+            return false;
         }
     }
 
@@ -434,28 +315,9 @@ LoadNetworkResult loadNetwork(Network &network, const std::filesystem::path &pat
     {
         if (!network.restoreCall(call))
         {
-            return LoadNetworkFailure{LoadNetworkError::AddCallsError, 0, std::nullopt, std::nullopt};
+            return false;
         }
     }
 
-    return std::monostate{};
-}
-
-std::string loadTextOrThrow(const std::filesystem::path &path)
-{
-    std::ifstream file(path);
-    std::ostringstream buffer;
-    if (!file.is_open())
-    {
-        throw std::runtime_error("File not working");
-    }
-    else
-    {
-        buffer << file.rdbuf();
-    }
-    if (file.bad())
-    {
-        throw std::runtime_error("Error during reading");
-    }
-    return buffer.str();
+    return true;
 }

@@ -1,7 +1,6 @@
 #pragma once
 
 #include <cstddef>
-#include <functional>
 #include <memory>
 #include <unordered_map>
 #include <variant>
@@ -21,24 +20,7 @@ enum class StartCallError
     UserBusy
 };
 
-enum class CreateCallError
-{
-    CallerNotFound,
-    ReceiverNotFound,
-    CallerBusy,
-    ReceiverBusy,
-    SameUser,
-    CallAlreadyExists
-};
-
-enum class GetCallError
-{
-    NotFound
-};
-
 using StartCallResult = std::variant<std::monostate, StartCallError>;
-using CreateCallResult = std::variant<std::monostate, CreateCallError>;
-using GetCallResult = std::variant<std::reference_wrapper<const Call>, GetCallError>;
 
 std::string_view toString(StartCallError error);
 
@@ -50,7 +32,7 @@ class Network
     bool removeUser(UserId id);
     void printUsers() const;
     std::size_t getUserCount() const;
-    CreateCallResult createCall(CallId callId, UserId callerId, UserId receiverId);
+    bool createCall(CallId callId, UserId callerId, UserId receiverId);
     void printCalls() const;
     std::size_t getCallCount() const;
     StartCallResult startCall(CallId callId);
@@ -67,7 +49,6 @@ class Network
     const User *getUser(UserId id) const;
     const Call *getCall(CallId id) const;
     bool restoreCall(const Call &call);
-    GetCallResult getCallResult(CallId id) const;
 
   private:
     std::unordered_map<UserId, User, UserIdHash> mUsers;

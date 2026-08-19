@@ -87,14 +87,14 @@ void testNetworkCallCreation(int &passed, int &failed)
     callCreationTestNetwork.addUser(secondTestUser);
     callCreationTestNetwork.addUser(thirdTestUser);
     check(callCreationTestNetwork.getCallCount() == 0, "Call count is 0", passed, failed);
-    check(std::holds_alternative<std::monostate>(callCreationTestNetwork.createCall(5, 1, 2)), "Creating first call between user 1 and user 2", passed, failed);
+    check(callCreationTestNetwork.createCall(5, 1, 2) == true, "Creating first call between user 1 and user 2", passed, failed);
     check(callCreationTestNetwork.getCallCount() == 1, "Call count is 1 after first call", passed, failed);
-    check(std::holds_alternative<CreateCallError>(callCreationTestNetwork.createCall(6, 4, 2)), "Creating second call between not existing user and user 2 rejected", passed, failed);
+    check(callCreationTestNetwork.createCall(6, 4, 2) == false, "Creating second call between not existing user and user 2 rejected", passed, failed);
     check(callCreationTestNetwork.getCallCount() == 1, "Call count is 1 after second call", passed, failed);
-    check(std::holds_alternative<CreateCallError>(callCreationTestNetwork.createCall(7, 2, 4)), "Creating third call between user 2 and not existing user rejected", passed, failed);
-    check(std::holds_alternative<CreateCallError>(callCreationTestNetwork.createCall(8, 1, 1)), "Creating fourth call between user 1 and himself rejected", passed, failed);
-    check(std::holds_alternative<CreateCallError>(callCreationTestNetwork.createCall(5, 2, 3)), "Creating call with already used ID", passed, failed);
-    check(std::holds_alternative<std::monostate>(callCreationTestNetwork.createCall(9, 2, 3)), "Creating call between user 2 and user 3", passed, failed);
+    check(callCreationTestNetwork.createCall(7, 2, 4) == false, "Creating third call between user 2 and not existing user rejected", passed, failed);
+    check(callCreationTestNetwork.createCall(8, 1, 1) == false, "Creating fourth call between user 1 and himself rejected", passed, failed);
+    check(callCreationTestNetwork.createCall(5, 2, 3) == false, "Creating call with already used ID", passed, failed);
+    check(callCreationTestNetwork.createCall(9, 2, 3) == true, "Creating call between user 2 and user 3", passed, failed);
     check(callCreationTestNetwork.getCallCount() == 2, "Call count final is 2", passed, failed);
 }
 
