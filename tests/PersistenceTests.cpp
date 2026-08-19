@@ -372,8 +372,7 @@ TEST(PersistenceTests, InvalidFileDoesNotPartiallyModifyNetwork)
     const auto &failure = std::get<LoadNetworkFailure>(loadResult);
     EXPECT_EQ(LoadNetworkError::InvalidCall, failure.error);
     EXPECT_EQ(4, failure.lineNumber);
-    ASSERT_TRUE(failure.callError.has_value());
-    EXPECT_EQ(DeserializeCallError::InvalidId, failure.callError.value());
+    EXPECT_EQ(failure.callError, std::optional{DeserializeCallError::InvalidId});
 
     EXPECT_EQ(network.getUserCount(), 0);
     EXPECT_EQ(network.getCallCount(), 0);
@@ -589,8 +588,7 @@ TEST(PersistenceTests, LoadNetworkReturnsInvalidUser)
     const auto &failure = std::get<LoadNetworkFailure>(result);
     EXPECT_EQ(failure.error, LoadNetworkError::InvalidUser);
     EXPECT_EQ(failure.lineNumber, 1);
-    ASSERT_TRUE(failure.userError.has_value());
-    EXPECT_EQ(failure.userError.value(), DeserializeUserError::InvalidId);
+    EXPECT_EQ(failure.userError, std::optional{DeserializeUserError::InvalidId});
 
     std::filesystem::remove_all("test_data");
 }
@@ -619,9 +617,7 @@ TEST(PersistenceTests, LoadNetworkPreservesUserParsingErrorAndLineNumber)
 
     EXPECT_EQ(failure.lineNumber, 3);
 
-    ASSERT_TRUE(failure.userError.has_value());
-
-    EXPECT_EQ(failure.userError.value(), DeserializeUserError::InvalidId);
+    EXPECT_EQ(failure.userError, std::optional{DeserializeUserError::InvalidId});
 
     std::filesystem::remove_all("test_data");
 }
