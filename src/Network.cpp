@@ -316,3 +316,28 @@ GetCallResult Network::getCallResult(CallId id) const
 
     return std::cref(*call);
 }
+
+std::vector<std::reference_wrapper<const User>> Network::getUsers() const
+{
+    std::vector<std::reference_wrapper<const User>> users;
+    users.reserve(mUsers.size());
+
+    for (const auto &[id, user] : mUsers)
+    {
+        users.push_back(std::cref(user));
+    }
+
+    return users;
+}
+std::vector<std::reference_wrapper<const Call>> Network::getCalls() const
+{
+    std::vector<std::reference_wrapper<const Call>> calls;
+    calls.reserve(mCalls.size());
+
+    for (const auto &[id, call] : mCalls)
+    {
+        calls.push_back(std::cref(call));
+    }
+
+    return calls;
+}
