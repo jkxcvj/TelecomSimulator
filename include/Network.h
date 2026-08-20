@@ -68,6 +68,8 @@ class Network
     const Call *getCall(CallId id) const;
     bool restoreCall(const Call &call);
     GetCallResult getCallResult(CallId id) const;
+    std::vector<std::reference_wrapper<const User>> getUsers() const;
+    std::vector<std::reference_wrapper<const Call>> getCalls() const;
 
   private:
     std::unordered_map<UserId, User, UserIdHash> mUsers;
