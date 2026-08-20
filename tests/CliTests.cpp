@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <optional>
 #include <sstream>
 
 #include "CliApplication.h"
@@ -12,8 +13,7 @@ TEST(CliTests, ReadsValidMenuOption)
 
     const auto option = readMenuOption(input);
 
-    ASSERT_TRUE(option.has_value());
-    EXPECT_EQ(*option, MenuOption::CreateCall);
+    EXPECT_EQ(option, std::optional{MenuOption::CreateCall});
 }
 
 TEST(CliTests, RejectsInvalidNumericMenuOption)
@@ -251,8 +251,8 @@ TEST(CliTests, ListsCalls)
     const auto text = output.str();
 
     EXPECT_NE(text.find("100"), std::string::npos);
-    EXPECT_NE(text.find("1"), std::string::npos);
-    EXPECT_NE(text.find("2"), std::string::npos);
+    EXPECT_NE(text.find('1'), std::string::npos);
+    EXPECT_NE(text.find('2'), std::string::npos);
     EXPECT_NE(text.find("Created"), std::string::npos);
 }
 
@@ -359,8 +359,7 @@ TEST(CliTests, ReadIntReturnsValue)
 
     const auto result = readInt(input);
 
-    ASSERT_TRUE(result.has_value());
-    EXPECT_EQ(*result, 42);
+    EXPECT_EQ(result, std::optional{42});
 }
 
 TEST(CliTests, ReadIntRejectsInvalidInput)
@@ -382,8 +381,7 @@ TEST(CliTests, ReadIntRecoversStreamAfterInvalidInput)
 
     EXPECT_FALSE(first.has_value());
 
-    ASSERT_TRUE(second.has_value());
-    EXPECT_EQ(*second, 42);
+    EXPECT_EQ(second, std::optional{42});
 }
 
 TEST(CliApplicationTests, HandlesMultipleCommandsAndExits)
