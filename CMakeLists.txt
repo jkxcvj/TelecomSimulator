@@ -163,6 +163,9 @@ add_library(telecom_core
     src/FileEventLogger.cpp
     src/EventDispatcher.cpp
     src/IntBuffer.cpp
+    src/CliUtils.cpp
+    src/PersistanceUtils.cpp
+    src/CliApplication.cpp
 )
 
 target_include_directories(telecom_core
@@ -208,6 +211,7 @@ add_executable(TelecomGTests
     tests/DesignPatternsTests.cpp
     tests/ConcurrencyTests.cpp
     tests/PersistenceTests.cpp
+    tests/CliTests.cpp
 )
 
 target_link_libraries(TelecomGTests
