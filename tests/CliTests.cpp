@@ -4,7 +4,7 @@
 
 #include "CliApplication.h"
 #include "CliUtils.h"
-#include "PersistenceUtils.h"
+#include "NetworkPersistence.h"
 #include "TestEventLogger.h"
 
 TEST(CliTests, ReadsValidMenuOption)
@@ -48,9 +48,7 @@ TEST(CliTests, PrintsMenu)
 
 TEST(CliTests, AddUserFromInput)
 {
-    CallStatistics statistics;
-    auto logger = std::make_unique<SilentEventLogger>();
-    Network network(std::move(logger), statistics);
+    Network network;
 
     std::istringstream input("1\n"
                              "Alice\n"
@@ -73,9 +71,7 @@ TEST(CliTests, AddUserFromInput)
 
 TEST(CliTests, AddUserReportsDuplicate)
 {
-    CallStatistics statistics;
-    auto logger = std::make_unique<SilentEventLogger>();
-    Network network(std::move(logger), statistics);
+    Network network;
 
     ASSERT_TRUE(network.addUser(User(UserId{1}, "Existing", "111")));
 
@@ -93,9 +89,7 @@ TEST(CliTests, AddUserReportsDuplicate)
 }
 TEST(CliTests, RemovesUserFromInput)
 {
-    CallStatistics statistics;
-    auto logger = std::make_unique<SilentEventLogger>();
-    Network network(std::move(logger), statistics);
+    Network network;
 
     ASSERT_TRUE(network.addUser(User(UserId{1}, "Alice", "111")));
 
@@ -111,9 +105,7 @@ TEST(CliTests, RemovesUserFromInput)
 
 TEST(CliTests, RemoveUserReportsNotFound)
 {
-    CallStatistics statistics;
-    auto logger = std::make_unique<SilentEventLogger>();
-    Network network(std::move(logger), statistics);
+    Network network;
 
     std::istringstream input("999\n");
     std::ostringstream output;
@@ -125,9 +117,7 @@ TEST(CliTests, RemoveUserReportsNotFound)
 
 TEST(CliTests, CreatesCallFromInput)
 {
-    CallStatistics statistics;
-    auto logger = std::make_unique<SilentEventLogger>();
-    Network network(std::move(logger), statistics);
+    Network network;
 
     ASSERT_TRUE(network.addUser(User(UserId{1}, "Alice", "111")));
     ASSERT_TRUE(network.addUser(User(UserId{2}, "Bob", "222")));
@@ -147,9 +137,7 @@ TEST(CliTests, CreatesCallFromInput)
 
 TEST(CliTests, CreateCallReportsMissingCaller)
 {
-    CallStatistics statistics;
-    auto logger = std::make_unique<SilentEventLogger>();
-    Network network(std::move(logger), statistics);
+    Network network;
 
     ASSERT_TRUE(network.addUser(User(UserId{2}, "Bob", "222")));
 
@@ -166,9 +154,7 @@ TEST(CliTests, CreateCallReportsMissingCaller)
 
 TEST(CliTests, StartsCallFromInput)
 {
-    CallStatistics statistics;
-    auto logger = std::make_unique<SilentEventLogger>();
-    Network network(std::move(logger), statistics);
+    Network network;
 
     ASSERT_TRUE(network.addUser(User(UserId{1}, "Alice", "111")));
     ASSERT_TRUE(network.addUser(User(UserId{2}, "Bob", "222")));
@@ -187,9 +173,7 @@ TEST(CliTests, StartsCallFromInput)
 
 TEST(CliTests, EndsCallFromInput)
 {
-    CallStatistics statistics;
-    auto logger = std::make_unique<SilentEventLogger>();
-    Network network(std::move(logger), statistics);
+    Network network;
 
     ASSERT_TRUE(network.addUser(User(UserId{1}, "Alice", "111")));
     ASSERT_TRUE(network.addUser(User(UserId{2}, "Bob", "222")));
@@ -212,9 +196,7 @@ TEST(CliTests, EndsCallFromInput)
 
 TEST(CliTests, ListsUsers)
 {
-    CallStatistics statistics;
-    auto logger = std::make_unique<SilentEventLogger>();
-    Network network(std::move(logger), statistics);
+    Network network;
 
     ASSERT_TRUE(network.addUser(User(UserId{1}, "Alice", "111")));
     ASSERT_TRUE(network.addUser(User(UserId{2}, "Bob", "222")));
@@ -233,9 +215,7 @@ TEST(CliTests, ListsUsers)
 
 TEST(CliTests, ListsCalls)
 {
-    CallStatistics statistics;
-    auto logger = std::make_unique<SilentEventLogger>();
-    Network network(std::move(logger), statistics);
+    Network network;
 
     ASSERT_TRUE(network.addUser(User(UserId{1}, "Alice", "111")));
     ASSERT_TRUE(network.addUser(User(UserId{2}, "Bob", "222")));
@@ -263,10 +243,7 @@ TEST(CliTests, SavesNetworkFromCli)
 
     std::filesystem::remove_all(dir);
     std::filesystem::create_directories(dir);
-
-    CallStatistics statistics;
-    auto logger = std::make_unique<SilentEventLogger>();
-    Network network(std::move(logger), statistics);
+    Network network;
 
     ASSERT_TRUE(network.addUser(User(UserId{1}, "Alice", "111")));
 
@@ -290,10 +267,7 @@ TEST(CliTests, LoadsNetworkFromCli)
     std::filesystem::create_directories(dir);
 
     ASSERT_TRUE(saveText(path, "USER|1|Alice|111\n"));
-
-    CallStatistics statistics;
-    auto logger = std::make_unique<SilentEventLogger>();
-    Network network(std::move(logger), statistics);
+    Network network;
 
     std::istringstream input(path.string() + "\n");
     std::ostringstream output;
@@ -309,9 +283,7 @@ TEST(CliTests, LoadsNetworkFromCli)
 
 TEST(CliTests, LoadReportsFailure)
 {
-    CallStatistics statistics;
-    auto logger = std::make_unique<SilentEventLogger>();
-    Network network(std::move(logger), statistics);
+    Network network;
 
     std::istringstream input("missing_file.txt\n");
     std::ostringstream output;
@@ -323,9 +295,7 @@ TEST(CliTests, LoadReportsFailure)
 
 TEST(CliApplicationTests, ExitsWhenUserSelectsExit)
 {
-    CallStatistics statistics;
-    auto logger = std::make_unique<SilentEventLogger>();
-    Network network(std::move(logger), statistics);
+    Network network;
 
     std::istringstream input("0\n");
     std::ostringstream output;
@@ -337,9 +307,7 @@ TEST(CliApplicationTests, ExitsWhenUserSelectsExit)
 
 TEST(CliApplicationTests, HandlesInvalidOptionAndContinues)
 {
-    CallStatistics statistics;
-    auto logger = std::make_unique<SilentEventLogger>();
-    Network network(std::move(logger), statistics);
+    Network network;
 
     std::istringstream input("abc\n"
                              "0\n");
@@ -386,9 +354,7 @@ TEST(CliTests, ReadIntRecoversStreamAfterInvalidInput)
 
 TEST(CliApplicationTests, HandlesMultipleCommandsAndExits)
 {
-    CallStatistics statistics;
-    auto logger = std::make_unique<SilentEventLogger>();
-    Network network(std::move(logger), statistics);
+    Network network;
 
     std::istringstream input("1\n" // AddUser
                              "1\n"

@@ -3,6 +3,7 @@
 #include <memory>
 #include <string>
 
+#include "CallStatistics.h"
 #include "Network.h"
 #include "TestEventLogger.h"
 #include "TestEventSubscriber.h"
@@ -10,8 +11,7 @@
 class NetworkTest : public ::testing::Test
 {
   protected:
-    CallStatistics mStatistics;
-    Network mNetwork = makeNetwork(mStatistics);
+    Network mNetwork = makeNetwork();
     User mFirstUser{UserId{1}, "John Doe", "123-456-7890"};
     User mSecondUser{UserId{2}, "Johnny Doesony", "123-456-7777"};
     User mThirdUser{UserId{3}, "Johnini Doesini", "123-456-9999"};
@@ -41,8 +41,7 @@ class InvalidCallCreationTest : public NetworkTest, public ::testing::WithParamI
 
 TEST(NetworkStandaloneTests, NewlyConstructedNetworkHasNoUsers)
 {
-    CallStatistics statistics;
-    Network emptyNetwork = makeNetwork(statistics);
+    Network emptyNetwork = makeNetwork();
 
     EXPECT_EQ(0, emptyNetwork.getUserCount());
 }
@@ -201,9 +200,8 @@ TEST_F(NetworkTest, CallLifecycleRejectsInvalidStateTransitions)
 TEST(NetworkTests, PublishesEventWhenUserIsRegistered)
 {
     auto subscriber = std::make_shared<RecordingEventSubscriber>();
-    CallStatistics statistics;
 
-    Network network(std::make_unique<SilentEventLogger>(), statistics);
+    Network network;
 
     network.subscribe(subscriber);
 
@@ -214,15 +212,14 @@ TEST(NetworkTests, PublishesEventWhenUserIsRegistered)
     const auto &messages = subscriber->getMessages();
 
     ASSERT_EQ(messages.size(), 1);
-    EXPECT_EQ(messages[0], "User registered");
+    EXPECT_EQ(messages[0], EventType::UserRegistered);
 }
 
 TEST(NetworkTests, PublishesEventWhenUserRegistrationIsRejected)
 {
     auto subscriber = std::make_shared<RecordingEventSubscriber>();
-    CallStatistics statistics;
 
-    Network network(std::make_unique<SilentEventLogger>(), statistics);
+    Network network;
 
     network.subscribe(subscriber);
 
@@ -234,15 +231,14 @@ TEST(NetworkTests, PublishesEventWhenUserRegistrationIsRejected)
     const auto &messages = subscriber->getMessages();
 
     ASSERT_EQ(messages.size(), 2);
-    EXPECT_EQ(messages[0], "User registered");
-    EXPECT_EQ(messages[1], "User registration rejected");
+    EXPECT_EQ(messages[0], EventType::UserRegistered);
+    EXPECT_EQ(messages[1], EventType::UserRegistrationRejected);
 }
 
 TEST(NetworkTests, PublishesEventWhenCallIsCreated)
 {
     auto subscriber = std::make_shared<RecordingEventSubscriber>();
-    CallStatistics statistics;
-    Network network(std::make_unique<SilentEventLogger>(), statistics);
+    Network network;
     network.subscribe(subscriber);
 
     ASSERT_TRUE(network.addUser(User{UserId{1}, "Caller", "111-111-1111"}));
@@ -253,14 +249,13 @@ TEST(NetworkTests, PublishesEventWhenCallIsCreated)
 
     const auto messages = subscriber->getMessages();
     ASSERT_EQ(messages.size(), messageCountBeforeOperation + 1);
-    EXPECT_EQ(messages.back(), "Call created");
+    EXPECT_EQ(messages.back(), EventType::CallCreated);
 }
 
 TEST(NetworkTests, PublishesEventWhenCallIsStarted)
 {
     auto subscriber = std::make_shared<RecordingEventSubscriber>();
-    CallStatistics statistics;
-    Network network(std::make_unique<SilentEventLogger>(), statistics);
+    Network network;
     network.subscribe(subscriber);
 
     ASSERT_TRUE(network.addUser(User{UserId{1}, "Caller", "111-111-1111"}));
@@ -272,14 +267,13 @@ TEST(NetworkTests, PublishesEventWhenCallIsStarted)
 
     const auto messages = subscriber->getMessages();
     ASSERT_EQ(messages.size(), messageCountBeforeOperation + 1);
-    EXPECT_EQ(messages.back(), "Call started");
+    EXPECT_EQ(messages.back(), EventType::CallStarted);
 }
 
 TEST(NetworkTests, PublishesEventWhenCallIsEnded)
 {
     auto subscriber = std::make_shared<RecordingEventSubscriber>();
-    CallStatistics statistics;
-    Network network(std::make_unique<SilentEventLogger>(), statistics);
+    Network network;
     network.subscribe(subscriber);
 
     ASSERT_TRUE(network.addUser(User{UserId{1}, "Caller", "111-111-1111"}));
@@ -292,14 +286,13 @@ TEST(NetworkTests, PublishesEventWhenCallIsEnded)
 
     const auto messages = subscriber->getMessages();
     ASSERT_EQ(messages.size(), messageCountBeforeOperation + 1);
-    EXPECT_EQ(messages.back(), "Call ended");
+    EXPECT_EQ(messages.back(), EventType::CallEnded);
 }
 
 TEST(NetworkTests, PublishesEventWhenCallCreationIsRejected)
 {
     auto subscriber = std::make_shared<RecordingEventSubscriber>();
-    CallStatistics statistics;
-    Network network(std::make_unique<SilentEventLogger>(), statistics);
+    Network network;
     network.subscribe(subscriber);
 
     ASSERT_TRUE(network.addUser(User{UserId{1}, "Caller", "111-111-1111"}));
@@ -311,7 +304,24 @@ TEST(NetworkTests, PublishesEventWhenCallCreationIsRejected)
 
     const auto messages = subscriber->getMessages();
     ASSERT_EQ(messages.size(), messageCountBeforeOperation + 1);
-    EXPECT_EQ(messages.back(), "Call creation rejected, receiver dont exist");
+    EXPECT_EQ(messages.back(), EventType::CallCreationRejected);
+}
+
+TEST(NetworkTests, CallStatisticsCountsPublishedCallEvents)
+{
+    Network network;
+    auto statistics = std::make_shared<CallStatistics>();
+    network.subscribe(statistics);
+
+    ASSERT_TRUE(network.addUser(User{UserId{1}, "Caller", "111-111-1111"}));
+    ASSERT_TRUE(network.addUser(User{UserId{2}, "Receiver", "222-222-2222"}));
+    ASSERT_TRUE(std::holds_alternative<std::monostate>(network.createCall(CallId{1}, UserId{1}, UserId{2})));
+    ASSERT_TRUE(std::holds_alternative<std::monostate>(network.startCall(CallId{1})));
+    ASSERT_TRUE(network.endCall(CallId{1}));
+
+    EXPECT_EQ(statistics->createdCount(), 1);
+    EXPECT_EQ(statistics->startedCount(), 1);
+    EXPECT_EQ(statistics->endedCount(), 1);
 }
 
 TEST(StartCallErrorTests, ConvertsErrorToString)
@@ -400,9 +410,7 @@ TEST_F(NetworkTest, ReturnsUsersWithoutActiveCallsSortedById)
 
 TEST(NetworkTests, GetCallResultReturnsCall)
 {
-    CallStatistics statistics;
-    auto logger = std::make_unique<SilentEventLogger>();
-    Network network(std::move(logger), statistics);
+    Network network;
 
     ASSERT_TRUE(network.addUser(User(UserId{1}, "Alice", "111")));
     ASSERT_TRUE(network.addUser(User(UserId{2}, "Bob", "222")));
@@ -422,9 +430,7 @@ TEST(NetworkTests, GetCallResultReturnsCall)
 
 TEST(NetworkTests, GetCallResultReturnsNotFound)
 {
-    CallStatistics statistics;
-    auto logger = std::make_unique<SilentEventLogger>();
-    Network network(std::move(logger), statistics);
+    Network network;
 
     const auto result = network.getCallResult(CallId{999});
 

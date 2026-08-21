@@ -9,10 +9,10 @@ TEST(EventDispatcherTests, NotifiesSubscribedObserver)
     EventDispatcher dispatcher;
     auto subscriber = std::make_shared<RecordingEventSubscriber>();
     dispatcher.subscribe(subscriber);
-    dispatcher.notify("User registered");
+    dispatcher.notify(EventType::UserRegistered);
 
     ASSERT_EQ(subscriber->getMessages().size(), 1);
-    EXPECT_EQ(subscriber->getMessages()[0], "User registered");
+    EXPECT_EQ(subscriber->getMessages()[0], EventType::UserRegistered);
 }
 
 TEST(EventDispatcherTests, DoesNotKeepSubscriberAlive)
@@ -32,7 +32,7 @@ TEST(EventDispatcherTests, DoesNotKeepSubscriberAlive)
 
     EXPECT_TRUE(lifetimeObserver.expired());
 
-    EXPECT_NO_THROW(dispatcher.notify("User registered"));
+    EXPECT_NO_THROW(dispatcher.notify(EventType::UserRegistered));
 }
 
 TEST(EventDispatcherTests, SkipsExpiredSubscriberAndNotifiesActiveSubscriber)
@@ -48,12 +48,12 @@ TEST(EventDispatcherTests, SkipsExpiredSubscriberAndNotifiesActiveSubscriber)
 
     expiredSubscriber.reset();
 
-    dispatcher.notify("Call started");
+    dispatcher.notify(EventType::CallStarted);
 
     const auto &messages = activeSubscriber->getMessages();
 
     ASSERT_EQ(messages.size(), 1);
-    EXPECT_EQ(messages[0], "Call started");
+    EXPECT_EQ(messages[0], EventType::CallStarted);
 }
 
 TEST(EventDispatcherTests, NotifiesAllActiveSubscribers)
@@ -67,16 +67,16 @@ TEST(EventDispatcherTests, NotifiesAllActiveSubscribers)
     dispatcher.subscribe(activeSubscriber1);
     dispatcher.subscribe(activeSubscriber2);
 
-    dispatcher.notify("Call started");
+    dispatcher.notify(EventType::CallStarted);
 
     const auto &messages = activeSubscriber1->getMessages();
 
     ASSERT_EQ(messages.size(), 1);
-    EXPECT_EQ(messages[0], "Call started");
+    EXPECT_EQ(messages[0], EventType::CallStarted);
     const auto &messages2 = activeSubscriber2->getMessages();
 
     ASSERT_EQ(messages2.size(), 1);
-    EXPECT_EQ(messages2[0], "Call started");
+    EXPECT_EQ(messages2[0], EventType::CallStarted);
 }
 
 TEST(EventDispatcherTests, DoesNotNotifyUnsubscribedObserver)
@@ -92,12 +92,12 @@ TEST(EventDispatcherTests, DoesNotNotifyUnsubscribedObserver)
 
     dispatcher.unsubscribe(firstSubscriber);
 
-    dispatcher.notify("Call ended");
+    dispatcher.notify(EventType::CallEnded);
 
     EXPECT_TRUE(firstSubscriber->getMessages().empty());
 
     ASSERT_EQ(secondSubscriber->getMessages().size(), 1);
-    EXPECT_EQ(secondSubscriber->getMessages()[0], "Call ended");
+    EXPECT_EQ(secondSubscriber->getMessages()[0], EventType::CallEnded);
 }
 
 TEST(EventDispatcherTests, DoesNotSubscribeSameObserverTwice)
@@ -109,12 +109,12 @@ TEST(EventDispatcherTests, DoesNotSubscribeSameObserverTwice)
     dispatcher.subscribe(subscriber);
     dispatcher.subscribe(subscriber);
 
-    dispatcher.notify("Call started");
+    dispatcher.notify(EventType::CallStarted);
 
     const auto &messages = subscriber->getMessages();
 
     ASSERT_EQ(messages.size(), 1);
-    EXPECT_EQ(messages[0], "Call started");
+    EXPECT_EQ(messages[0], EventType::CallStarted);
 }
 
 TEST(EventDispatcherTests, RejectsNullSubscriber)
@@ -122,4 +122,17 @@ TEST(EventDispatcherTests, RejectsNullSubscriber)
     EventDispatcher dispatcher;
 
     EXPECT_THROW(dispatcher.subscribe(nullptr), std::invalid_argument);
+}
+
+TEST(EventDispatcherTests, ConvertsEventTypesToMessages)
+{
+    EXPECT_EQ(toString(EventType::UserRegistered), "User registered");
+    EXPECT_EQ(toString(EventType::UserRegistrationRejected), "User registration rejected");
+    EXPECT_EQ(toString(EventType::CallCreated), "Call created");
+    EXPECT_EQ(toString(EventType::CallCreationRejected), "Call creation rejected");
+    EXPECT_EQ(toString(EventType::CallStarted), "Call started");
+    EXPECT_EQ(toString(EventType::CallStartRejected), "Call start rejected");
+    EXPECT_EQ(toString(EventType::CallEnded), "Call ended");
+    EXPECT_EQ(toString(EventType::CallEndRejected), "Call end rejected");
+    EXPECT_EQ(toString(EventType::CallRestored), "Call restored");
 }

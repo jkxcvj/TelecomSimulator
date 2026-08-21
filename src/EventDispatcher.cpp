@@ -2,6 +2,32 @@
 
 #include "algorithm"
 
+std::string_view toString(EventType eventType)
+{
+    switch (eventType)
+    {
+    case EventType::UserRegistered:
+        return "User registered";
+    case EventType::UserRegistrationRejected:
+        return "User registration rejected";
+    case EventType::CallCreated:
+        return "Call created";
+    case EventType::CallCreationRejected:
+        return "Call creation rejected";
+    case EventType::CallStarted:
+        return "Call started";
+    case EventType::CallStartRejected:
+        return "Call start rejected";
+    case EventType::CallEnded:
+        return "Call ended";
+    case EventType::CallEndRejected:
+        return "Call end rejected";
+    case EventType::CallRestored:
+        return "Call restored";
+    }
+    return "Unknown event";
+}
+
 void EventDispatcher::subscribe(const std::shared_ptr<EventSubscriber> &subscriber)
 {
     auto iterator = mSubscribers.begin();
@@ -30,7 +56,7 @@ void EventDispatcher::subscribe(const std::shared_ptr<EventSubscriber> &subscrib
     }
 }
 
-void EventDispatcher::notify(std::string_view message)
+void EventDispatcher::notify(EventType event)
 {
     auto iterator = mSubscribers.begin();
 
@@ -38,7 +64,7 @@ void EventDispatcher::notify(std::string_view message)
     {
         if (auto subscriber = iterator->lock())
         {
-            subscriber->onEvent(message);
+            subscriber->onEvent(event);
             ++iterator;
         }
         else

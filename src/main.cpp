@@ -1,17 +1,20 @@
 #include <iostream>
 #include <memory>
 
+#include "CallStatistics.h"
 #include "CliApplication.h"
 #include "Network.h"
 #include "NullEventLogger.h"
 
 int main()
 {
-    CallStatistics statistics;
+    auto statistics = std::make_shared<CallStatistics>();
 
-    auto logger = std::make_unique<NullEventLogger>();
+    auto logger = std::make_shared<NullEventLogger>();
 
-    Network network(std::move(logger), statistics);
+    Network network;
+    network.subscribe(logger);
+    network.subscribe(statistics);
 
     CliApplication app(network, std::cin, std::cout);
 

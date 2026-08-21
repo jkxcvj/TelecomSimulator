@@ -1,7 +1,9 @@
 #pragma once
 #include <atomic>
 
-class CallStatistics
+#include "EventSubscriber.h"
+
+class CallStatistics : public EventSubscriber
 {
   public:
     void recordCreated() { ++created; }
@@ -11,6 +13,30 @@ class CallStatistics
     int createdCount() const { return created.load(); }
     int startedCount() const { return started.load(); }
     int endedCount() const { return ended.load(); }
+    void onEvent(EventType event) override
+    {
+        switch (event)
+        {
+        case EventType::CallCreated:
+            recordCreated();
+            break;
+
+        case EventType::CallStarted:
+            recordStarted();
+            break;
+
+        case EventType::CallEnded:
+            recordEnded();
+            break;
+
+        case EventType::CallRestored:
+            recordCreated();
+            break;
+
+        default:
+            break;
+        }
+    }
 
   private:
     std::atomic<int> created{0};

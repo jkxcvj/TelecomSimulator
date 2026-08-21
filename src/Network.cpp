@@ -3,8 +3,6 @@
 #include <algorithm>
 #include <iostream>
 #include <iterator>
-#include <stdexcept>
-#include <utility>
 #include <vector>
 
 std::string_view toString(StartCallError error)
@@ -21,14 +19,6 @@ std::string_view toString(StartCallError error)
         return "User busy";
     }
     return "Unknown start call error";
-}
-
-Network::Network(std::unique_ptr<EventLogger> logger, CallStatistics &statistics) : mLogger(std::move(logger)), mStatistics(statistics)
-{
-    if (mLogger == nullptr)
-    {
-        throw std::invalid_argument("Event logger cannot be null");
-    }
 }
 
 void Network::printUsers() const
@@ -63,11 +53,11 @@ bool Network::addUser(const User &user)
     bool val = mUsers.emplace(user.getId(), user).second;
     if (val)
     {
-        publishEvent("User registered");
+        publishEvent(EventType::UserRegistered);
     }
     else
     {
-        publishEvent("User registration rejected");
+        publishEvent(EventType::UserRegistrationRejected);
     }
     return val;
 }
@@ -107,45 +97,50 @@ CreateCallResult Network::createCall(CallId callId, UserId callerId, UserId rece
 {
     if ((findCall(callId) != nullptr))
     {
-        publishEvent("Call creation rejected, call already exist");
+        publishEvent(EventType::CallCreationRejected);
         return CreateCallError::CallAlreadyExists;
     }
     else if (!userExists(callerId))
     {
-        publishEvent("Call creation rejected, caller dont exist");
+        publishEvent(EventType::CallCreationRejected);
         return CreateCallError::CallerNotFound;
     }
     else if (!userExists(receiverId))
     {
-        publishEvent("Call creation rejected, receiver dont exist");
+        publishEvent(EventType::CallCreationRejected);
         return CreateCallError::ReceiverNotFound;
     }
     else if (callerId == receiverId)
     {
-        publishEvent("Receiver cant be the same person as caller");
+        publishEvent(EventType::CallCreationRejected);
         return CreateCallError::SameUser;
     }
     else if (isUserBusy(callerId))
     {
-        publishEvent("Call creation rejected, caller is busy");
+        publishEvent(EventType::CallCreationRejected);
         return CreateCallError::CallerBusy;
     }
     else if (isUserBusy(receiverId))
     {
-        publishEvent("Call creation rejected, receiver is busy");
+        publishEvent(EventType::CallCreationRejected);
         return CreateCallError::ReceiverBusy;
     }
-    publishEvent("Call created");
-    mStatistics.recordCreated();
+    publishEvent(EventType::CallCreated);
     mCalls.try_emplace(callId, CallParameters{callId, callerId, receiverId});
     return std::monostate{};
 }
 
 bool Network::restoreCall(const Call &call)
 {
-    publishEvent("Call restored");
-    mStatistics.recordCreated();
-    return mCalls.try_emplace(call.getId(), CallParameters{call.getId(), call.getCallerId(), call.getReceiverId()}, call.getStatusId()).second;
+    const bool restored =
+        mCalls.try_emplace(call.getId(), CallParameters{call.getId(), call.getCallerId(), call.getReceiverId()}, call.getStatusId()).second;
+
+    if (restored)
+    {
+        publishEvent(EventType::CallRestored);
+    }
+
+    return restored;
 }
 
 Call *Network::findCall(CallId callId)
@@ -183,31 +178,30 @@ StartCallResult Network::startCall(CallId callId)
 
     if (currCall == nullptr)
     {
-        publishEvent("Call start rejected");
+        publishEvent(EventType::CallStartRejected);
         return StartCallError::CallNotFound;
     }
 
     if (currCall->getStatusId() == CallStatus::Active)
     {
-        publishEvent("Call start rejected");
+        publishEvent(EventType::CallStartRejected);
         return StartCallError::CallAlreadyStarted;
     }
 
     if (currCall->getStatusId() == CallStatus::Ended)
     {
-        publishEvent("Call start rejected");
+        publishEvent(EventType::CallStartRejected);
         return StartCallError::CallAlreadyEnded;
     }
 
     if (isUserBusy(currCall->getCallerId()) || isUserBusy(currCall->getReceiverId()))
     {
-        publishEvent("Call start rejected");
+        publishEvent(EventType::CallStartRejected);
         return StartCallError::UserBusy;
     }
 
     currCall->start();
-    publishEvent("Call started");
-    mStatistics.recordStarted();
+    publishEvent(EventType::CallStarted);
 
     return std::monostate{};
 }
@@ -217,22 +211,17 @@ bool Network::endCall(CallId callId)
     Call *currCall = findCall(callId);
     if (currCall == nullptr)
     {
-        publishEvent("Call end rejected");
+        publishEvent(EventType::CallEndRejected);
         return false;
     }
-    publishEvent("Call ended");
-    mStatistics.recordEnded();
+    publishEvent(EventType::CallEnded);
     return currCall->end();
 }
 
 void Network::subscribe(const std::shared_ptr<EventSubscriber> &subscriber) { mEventDispatcher.subscribe(subscriber); }
 void Network::unsubscribe(const std::shared_ptr<EventSubscriber> &subscriber) { mEventDispatcher.unsubscribe(subscriber); }
 
-void Network::publishEvent(std::string_view message)
-{
-    mLogger->log(message);
-    mEventDispatcher.notify(message);
-}
+void Network::publishEvent(EventType eventType) { mEventDispatcher.notify(eventType); }
 
 std::size_t Network::getActiveCallCount() const
 {

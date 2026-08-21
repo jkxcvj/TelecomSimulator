@@ -1,6 +1,5 @@
 #pragma once
 
-#include <string>
 #include <vector>
 
 #include "EventDispatcher.h"
@@ -9,9 +8,9 @@
 class RecordingEventSubscriber final : public EventSubscriber
 {
   public:
-    void onEvent(std::string_view message) override { mMessages.emplace_back(message); }
-    const std::vector<std::string> getMessages() { return mMessages; }
+    void onEvent(EventType event) override { mEvents.emplace_back(event); }
+    const std::vector<EventType> &getMessages() const { return mEvents; }
 
   private:
-    std::vector<std::string> mMessages;
+    std::vector<EventType> mEvents;
 };

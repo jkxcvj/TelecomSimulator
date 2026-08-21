@@ -164,8 +164,10 @@ add_library(telecom_core
     src/EventDispatcher.cpp
     src/IntBuffer.cpp
     src/CliUtils.cpp
-    src/PersistanceUtils.cpp
     src/CliApplication.cpp
+    src/FileUtils.cpp
+    src/Serialization.cpp
+    src/NetworkPersistence.cpp
 )
 
 target_include_directories(telecom_core
