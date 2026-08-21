@@ -2,8 +2,10 @@
 #include <variant>
 
 #include "CallStatistics.h"
+#include "FileUtils.h"
 #include "Network.h"
-#include "PersistenceUtils.h"
+#include "NetworkPersistence.h"
+#include "Serialization.h"
 #include "TestEventLogger.h"
 
 TEST(PersistenceErrorTests, ConvertsDeserializeErrorsToStrings)
@@ -290,10 +292,7 @@ TEST(PersistenceTests, SavesNetworkToFile)
     std::filesystem::remove_all(dir);
     std::filesystem::create_directories(dir);
 
-    CallStatistics statistics;
-    auto logger = std::make_unique<SilentEventLogger>();
-
-    Network network(std::move(logger), statistics);
+    Network network;
 
     ASSERT_TRUE(network.addUser(User(UserId{1}, "Alice", "123456789")));
 
@@ -331,10 +330,7 @@ TEST(PersistenceTests, LoadsNetworkFromFile)
                                    "USER|2|Bob|987654321\n"
                                    "CALL|100|1|2|Active\n"));
 
-    CallStatistics statistics;
-    auto logger = std::make_unique<SilentEventLogger>();
-
-    Network network(std::move(logger), statistics);
+    Network network;
 
     const auto loadResult = loadNetwork(network, filePath);
     ASSERT_TRUE(std::holds_alternative<std::monostate>(loadResult));
@@ -362,10 +358,7 @@ TEST(PersistenceTests, InvalidFileDoesNotPartiallyModifyNetwork)
                                    "USER|2|Bob|987654321\n"
                                    "CALL|100|1|2|Active\n"
                                    "CALL|BROKEN|1|2|Ended\n"));
-
-    CallStatistics statistics;
-    auto logger = std::make_unique<SilentEventLogger>();
-    Network network(std::move(logger), statistics);
+    Network network;
 
     const auto loadResult = loadNetwork(network, filePath);
     ASSERT_TRUE(std::holds_alternative<LoadNetworkFailure>(loadResult));
@@ -390,10 +383,7 @@ TEST(PersistenceTests, ExistingUserConflictDoesNotPartiallyModifyNetwork)
 
     ASSERT_TRUE(saveText(filePath, "USER|1|Alice|123456789\n"
                                    "USER|2|Bob|987654321\n"));
-
-    CallStatistics statistics;
-    auto logger = std::make_unique<SilentEventLogger>();
-    Network network(std::move(logger), statistics);
+    Network network;
 
     ASSERT_TRUE(network.addUser(User(UserId{2}, "Existing", "111111111")));
 
@@ -418,10 +408,7 @@ TEST(PersistenceTests, DuplicateUserInFileDoesNotModifyNetwork)
 
     ASSERT_TRUE(saveText(filePath, "USER|1|Alice|123456789\n"
                                    "USER|1|Bob|987654321\n"));
-
-    CallStatistics statistics;
-    auto logger = std::make_unique<SilentEventLogger>();
-    Network network(std::move(logger), statistics);
+    Network network;
 
     const auto loadResult = loadNetwork(network, filePath);
     ASSERT_TRUE(std::holds_alternative<LoadNetworkFailure>(loadResult));
@@ -442,10 +429,7 @@ TEST(PersistenceTests, RejectsCallReferencingMissingUser)
 
     ASSERT_TRUE(saveText(filePath, "USER|1|Alice|123456789\n"
                                    "CALL|100|1|999|Created\n"));
-
-    CallStatistics statistics;
-    auto logger = std::make_unique<SilentEventLogger>();
-    Network network(std::move(logger), statistics);
+    Network network;
 
     const auto loadResult = loadNetwork(network, filePath);
     ASSERT_TRUE(std::holds_alternative<LoadNetworkFailure>(loadResult));
@@ -464,10 +448,7 @@ TEST(PersistenceTests, SavesAndLoadsWholeNetwork)
 
     std::filesystem::remove_all(dir);
     std::filesystem::create_directories(dir);
-
-    CallStatistics statistics1;
-    auto logger1 = std::make_unique<SilentEventLogger>();
-    Network original(std::move(logger1), statistics1);
+    Network original;
 
     ASSERT_TRUE(original.addUser(User(UserId{1}, "Alice", "123456789")));
 
@@ -480,10 +461,7 @@ TEST(PersistenceTests, SavesAndLoadsWholeNetwork)
     ASSERT_TRUE(std::holds_alternative<std::monostate>(startResult));
 
     ASSERT_TRUE(saveNetwork(original, filePath));
-
-    CallStatistics statistics2;
-    auto logger2 = std::make_unique<SilentEventLogger>();
-    Network loaded(std::move(logger2), statistics2);
+    Network loaded;
 
     const auto loadResult = loadNetwork(loaded, filePath);
     ASSERT_TRUE(std::holds_alternative<std::monostate>(loadResult));
@@ -555,10 +533,7 @@ TEST(PersistenceTests, LoadNetworkReturnsInvalidRecordType)
     std::filesystem::create_directories("test_data");
 
     ASSERT_TRUE(saveText(path, "SOMETHING|1|2|3\n"));
-
-    CallStatistics statistics;
-    auto logger = std::make_unique<SilentEventLogger>();
-    Network network(std::move(logger), statistics);
+    Network network;
 
     const auto result = loadNetwork(network, path);
 
@@ -577,10 +552,7 @@ TEST(PersistenceTests, LoadNetworkReturnsInvalidUser)
     std::filesystem::create_directories("test_data");
 
     ASSERT_TRUE(saveText(path, "USER|abc|Alice|123\n"));
-
-    CallStatistics statistics;
-    auto logger = std::make_unique<SilentEventLogger>();
-    Network network(std::move(logger), statistics);
+    Network network;
 
     const auto result = loadNetwork(network, path);
 
@@ -602,10 +574,7 @@ TEST(PersistenceTests, LoadNetworkPreservesUserParsingErrorAndLineNumber)
     ASSERT_TRUE(saveText(path, "USER|1|Alice|111\n"
                                "USER|2|Bob|222\n"
                                "USER|abc|Charlie|333\n"));
-
-    CallStatistics statistics;
-    auto logger = std::make_unique<SilentEventLogger>();
-    Network network(std::move(logger), statistics);
+    Network network;
 
     const auto result = loadNetwork(network, path);
 
@@ -630,10 +599,7 @@ TEST(PersistenceTests, LoadNetworkPreservesInvalidUserPrefix)
 
     ASSERT_TRUE(saveText(path, "USER|1|Alice|111\n"
                                "CALLX|2|Bob|222\n"));
-
-    CallStatistics statistics;
-    auto logger = std::make_unique<SilentEventLogger>();
-    Network network(std::move(logger), statistics);
+    Network network;
 
     const auto result = loadNetwork(network, path);
 
@@ -651,9 +617,7 @@ TEST(PersistenceTests, LoadNetworkPreservesInvalidUserPrefix)
 
 TEST(PersistenceTests, LoadNetworkFileOpenFailureHasNoLineNumber)
 {
-    CallStatistics statistics;
-    auto logger = std::make_unique<SilentEventLogger>();
-    Network network(std::move(logger), statistics);
+    Network network;
 
     const auto result = loadNetwork(network, "does_not_exist.txt");
 

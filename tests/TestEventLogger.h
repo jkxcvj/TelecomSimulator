@@ -9,9 +9,9 @@ class SilentEventLogger final : public EventLogger
     void log(std::string_view) override {}
 };
 
-inline Network makeNetwork(CallStatistics &statistics)
+inline Network makeNetwork()
 {
-    return Network(std::make_unique<SilentEventLogger>(), statistics);
+    return Network{};
 }
 
 class RecordingEventLogger final : public EventLogger

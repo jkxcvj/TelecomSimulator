@@ -10,7 +10,7 @@ class EventDispatcher
 {
   public:
     void subscribe(const std::shared_ptr<EventSubscriber> &subscriber);
-    void notify(std::string_view message);
+    void notify(EventType event);
     void unsubscribe(const std::shared_ptr<EventSubscriber> &subscriber);
 
   private:
