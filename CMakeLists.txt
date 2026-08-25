@@ -151,6 +151,14 @@ FetchContent_Declare(
     GIT_TAG v1.17.0
 )
 
+set(
+    INSTALL_GTEST
+    OFF
+    CACHE BOOL
+    "Disable GoogleTest installation"
+    FORCE
+)
+
 FetchContent_MakeAvailable(googletest)
 
 add_library(telecom_core
@@ -186,6 +194,10 @@ enable_clang_tidy(telecom_core)
 
 add_executable(TelecomSimulator
     src/main.cpp
+)
+install(
+    TARGETS TelecomSimulator
+    RUNTIME DESTINATION bin
 )
 
 target_link_libraries(TelecomSimulator
@@ -290,3 +302,8 @@ add_custom_target(
     COMMENT "Checking C++ source formatting"
     VERBATIM
 )
+
+set(CPACK_PACKAGE_NAME "TelecomSimulator")
+set(CPACK_PACKAGE_VERSION "1.0.0")
+set(CPACK_GENERATOR "TGZ")
+include(CPack)
