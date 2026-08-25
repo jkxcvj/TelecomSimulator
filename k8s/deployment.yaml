@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: telecom-simulator
+
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: telecom-simulator
+
+  template:
+    metadata:
+      labels:
+        app: telecom-simulator
+
+    spec:
+      containers:
+        - name: telecom-simulator
+          image: telecom-simulator:installed
+          imagePullPolicy: IfNotPresent
+          stdin: true
+          tty: true
