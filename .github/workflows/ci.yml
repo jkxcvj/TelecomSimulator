@@ -32,6 +32,17 @@ jobs:
       - name: Run tests
         run: ctest --test-dir build-release --output-on-failure
 
+      - name: Run scripted CLI demo
+        run: |
+          timeout 10s ./build-release/TelecomSimulator < examples/demo-input.txt > build-release/demo-output.txt
+          cat build-release/demo-output.txt
+          grep -Fq 'User is busy' build-release/demo-output.txt
+          grep -Fq '101 | caller=1 | receiver=2 | Ended' build-release/demo-output.txt
+          grep -Fq '102 | caller=1 | receiver=3 | Created' build-release/demo-output.txt
+          if grep -Fq 'Could not end call' build-release/demo-output.txt; then
+            exit 1
+          fi
+
   sanitizers:
     name: Debug with ASan and UBSan
     runs-on: ubuntu-latest

@@ -12,6 +12,14 @@ int CliApplication::run()
 
         if (!option.has_value())
         {
+            if (mInput.eof())
+            {
+                return 0;
+            }
+            if (mInput.bad())
+            {
+                return 1;
+            }
             mOutput << "Invalid option\n";
             continue;
         }
