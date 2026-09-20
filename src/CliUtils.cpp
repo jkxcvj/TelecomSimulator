@@ -212,6 +212,7 @@ void handleEndCall(Network &network, std::istream &input, std::ostream &output)
     if (call)
     {
         output << "Call ended\n";
+        return;
     }
     output << "Could not end call\n";
 }
@@ -263,6 +264,10 @@ std::optional<int> readInt(std::istream &input)
 
     if (!(input >> value))
     {
+        if (input.eof() || input.bad())
+        {
+            return std::nullopt;
+        }
         input.clear();
         input.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 

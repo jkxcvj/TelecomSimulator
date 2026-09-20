@@ -2,327 +2,177 @@
 
 [![C++ CI](https://github.com/jkxcvj/TelecomSimulator/actions/workflows/ci.yml/badge.svg)](https://github.com/jkxcvj/TelecomSimulator/actions/workflows/ci.yml)
 
-TelecomSimulator is a small C++20 application that models users and telephone calls inside a simple telecom network.
+**A C++20 command-line simulator for managing users and the lifecycle of telephone calls.**
 
-The project is developed as a practical learning environment for modern C++, API design, automated testing, CMake, static analysis, sanitizers, Git workflows, and continuous integration.
+Register users, create and control calls, reject conflicting connections, and save or load network records. The project combines a reusable domain library with an interactive CLI, GoogleTest tests, and automated code quality checks.
 
-## Current Features
+Built as a personal portfolio project to practice modern C++: ownership and object lifetimes, typed errors, event subscribers, persistence, and testable application design. The simulation models call records and state transitions; it does not transmit audio or implement telecom protocols.
 
-- Register users in the network
-- Reject duplicate user IDs
-- Create calls between registered users
-- Start and end existing calls
-- Track call states:
-  - `Created`
-  - `Active`
-  - `Ended`
-- Prevent a user from participating in more than one active call
-- Store and display users and call records
-- Validate the core network logic with automated GoogleTest tests
-- Run formatting, static analysis, compiler warnings, and sanitizers locally and in CI
-- Index users and calls by ID using `std::unordered_map`
-- Use strong `UserId` and `CallId` types to prevent accidental identifier mix-ups
+[Quick start](#quick-start) · [Demo](#try-the-demo) · [Architecture](#architecture) · [Development guide](docs/DEVELOPMENT.md)
 
-## Example Output
+## Features
 
-```text
-================================
-      TELECOM SIMULATOR
-================================
+- **Call lifecycle:** create, start, and end calls (`Created → Active → Ended`). Reject missing participants, duplicate IDs, self-calls, and attempts to connect busy users.
+- **Interactive CLI:** add and remove users, list users and calls, and save or load data through a numbered menu.
+- **Text persistence:** serialize users and call states; report malformed records, duplicate IDs, and missing referenced users when loading.
+- **Event subscribers:** publish domain events to interchangeable console, file, or null loggers and atomic call counters. The default executable uses a null logger and a statistics subscriber; counters are available through the C++ API.
+- **Automated verification:** GoogleTest and CTest, compiler warnings, clang-format, clang-tidy, AddressSanitizer, and UndefinedBehaviorSanitizer.
+- **Distribution:** CMake install rules, a CPack `.tar.gz` package, and a multi-stage Docker build that runs tests before creating the runtime image.
 
---- Registering users ---
-[OK] Added user Alice with ID 1
-[OK] Added user Bob with ID 2
-[OK] Added user Charlie with ID 3
-[ERROR] User with ID 1 already exists
+## Quick start
 
---- Registered users ---
-User ID: 1, Name: Alice Johnson
-User ID: 2, Name: Bob Smith
-User ID: 3, Name: Charlie Brown
+The following commands target Linux / WSL. You need a C++20 compiler, CMake 3.20+, Git, and clang-format. CMake downloads GoogleTest v1.17.0 on first configuration, so initial setup requires network access.
 
---- Call scenario ---
-[OK] Created call 101 from Alice to Bob
-[OK] Started call 101 between Alice and Bob
-[OK] Created call 102 from Alice to Charlie
-[ERROR] Could not start call 102 because Alice is already busy
-[OK] Ended call 101 between Alice and Bob
-
---- Final call records ---
-Call ID: 101
-Caller ID: 1
-Receiver ID: 2
-Status: Ended
-
-Call ID: 102
-Caller ID: 1
-Receiver ID: 3
-Status: Created
-
-Demo completed. Registered users: 3, call records: 2
-```
-
-## Technologies and Tools
-
-- C++20
-- CMake
-- GoogleTest
-- Git and GitHub
-- GitHub Actions
-- clang-format
-- clang-tidy
-- AddressSanitizer
-- UndefinedBehaviorSanitizer
-
-## Project Structure
-
-```text
-.
-├── .clang-format
-├── .clang-tidy
-├── .github/
-│   └── workflows/
-│       └── ci.yml
-├── .vscode/
-│   └── settings.json
-├── examples/
-│   ├── AsanDemo.cpp
-│   ├── ManualTestRunner.cpp
-│   └── UbsanDemo.cpp
-├── include/
-│   ├── Call.h
-│   ├── Network.h
-│   └── User.h
-├── src/
-│   ├── Call.cpp
-│   ├── Network.cpp
-│   ├── User.cpp
-│   └── main.cpp
-├── tests/
-│   ├── CallTests.cpp
-│   ├── NetworkTests.cpp
-│   └── UserTests.cpp
-├── CMakeLists.txt
-└── README.md
-```
-
-### Main Directories
-
-- `include/` — public project headers
-- `src/` — production code and the demo application
-- `tests/` — automated GoogleTest tests
-- `examples/` — educational examples for manual testing and sanitizers
-- `.github/workflows/` — GitHub Actions CI configuration
-
-## Requirements
-
-- CMake 3.20 or newer
-- A compiler with C++20 support
-- Git
-- clang-format
-- clang-tidy when `ENABLE_CLANG_TIDY=ON`
-- Internet access during the first CMake configuration so GoogleTest can be downloaded through `FetchContent`
-
-The commands below assume Linux or WSL with a single-config CMake generator.
-
-## Building the Project
-
-Configure a Release build:
+On Ubuntu, install the build tools:
 
 ```bash
+sudo apt-get update
+sudo apt-get install -y build-essential cmake git clang-format
+```
+
+Clone, build, and run:
+
+```bash
+git clone https://github.com/jkxcvj/TelecomSimulator.git
+cd TelecomSimulator
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-```
-
-Build all default targets:
-
-```bash
-cmake --build build
-```
-
-## Running the Application
-
-```bash
+cmake --build build --parallel 2
+ctest --test-dir build --output-on-failure
 ./build/TelecomSimulator
 ```
 
-## Running Tests
+The application displays a numbered menu. Choose `0` to exit; end-of-input also exits cleanly.
+
+## Try the demo
+
+Run from the repository root:
 
 ```bash
-ctest --test-dir build --output-on-failure
+./build/TelecomSimulator < examples/demo-input.txt
 ```
 
-The test suite covers the main behavior of:
+The script registers Alice, Bob, and Charlie and creates two calls. It starts Alice's call to Bob, rejects her second connection while she is busy, and then ends the first call.
 
-- `User`
-- `Call`
-- `Network`
-- call creation
-- call state transitions
-- invalid operations
-- busy-user protection
+Selected output (menus and prompts omitted; record order may vary):
 
-## Code Quality
-
-### Compiler Warnings
-
-The project enables:
-
-- GCC and Clang:
-  - `-Wall`
-  - `-Wextra`
-  - `-Wpedantic`
-- MSVC:
-  - `/W4`
-
-Warnings can be promoted to errors:
-
-```bash
-cmake -S . -B build-werror \
-    -DCMAKE_BUILD_TYPE=Release \
-    -DENABLE_WARNINGS_AS_ERRORS=ON
-
-cmake --build build-werror
+```text
+Call created
+Call created
+Call started
+User is busy
+Call ended
+Calls:
+101 | caller=1 | receiver=2 | Ended
+102 | caller=1 | receiver=3 | Created
 ```
 
-### Formatting
+For an interactive persistence demo, launch the application, choose `9` (Load), and enter `examples/sample-network.txt`. Choose `6` or `7` to inspect the loaded records, then `8` to save them to a file of your choice.
 
-Format all project C++ files:
+Loading **merges records into the current network**. Loading the same file twice reports duplicate IDs. Start a new application session to load into an empty network.
 
-```bash
-cmake --build build --target format
+### Save format
+
+```text
+USER|1|Alice|111111111
+USER|2|Bob|222222222
+CALL|101|1|2|Ended
 ```
 
-Check formatting without changing files:
-
-```bash
-cmake --build build --target format-check
-```
-
-The formatting rules are defined in `.clang-format`.
-
-### Static Analysis
-
-Configure a build with clang-tidy enabled:
-
-```bash
-cmake -S . -B build-tidy \
-    -DCMAKE_BUILD_TYPE=Debug \
-    -DENABLE_CLANG_TIDY=ON \
-    -DENABLE_WARNINGS_AS_ERRORS=ON
-```
-
-Build the project and run clang-tidy automatically:
-
-```bash
-cmake --build build-tidy
-```
-
-The enabled checks are configured in `.clang-tidy`.
-
-### AddressSanitizer and UndefinedBehaviorSanitizer
-
-Configure a sanitizer build:
-
-```bash
-cmake -S . -B build-sanitizers \
-    -DCMAKE_BUILD_TYPE=Debug \
-    -DENABLE_WARNINGS_AS_ERRORS=ON \
-    -DENABLE_ADDRESS_SANITIZER=ON \
-    -DENABLE_UNDEFINED_BEHAVIOR_SANITIZER=ON
-```
-
-Build and test:
-
-```bash
-cmake --build build-sanitizers
-ctest --test-dir build-sanitizers --output-on-failure
-```
-
-The `examples/` directory also contains small educational programs used to demonstrate sanitizer behavior.
-
-## CMake Options
-
-| Option | Default | Description |
-|---|---:|---|
-| `ENABLE_WARNINGS_AS_ERRORS` | `OFF` | Treat compiler warnings as errors |
-| `ENABLE_ADDRESS_SANITIZER` | `OFF` | Enable AddressSanitizer |
-| `ENABLE_UNDEFINED_BEHAVIOR_SANITIZER` | `OFF` | Enable UndefinedBehaviorSanitizer |
-| `ENABLE_CLANG_TIDY` | `OFF` | Run clang-tidy during compilation |
-
-## Continuous Integration
-
-GitHub Actions runs automatically for pushes and pull requests targeting `main`.
-
-The CI pipeline contains three independent jobs.
-
-### Release Build
-
-- Configures a Release build
-- Treats compiler warnings as errors
-- Checks clang-format compliance
-- Builds the project
-- Runs the full test suite
-
-### Sanitizer Build
-
-- Configures a Debug build
-- Enables AddressSanitizer
-- Enables UndefinedBehaviorSanitizer
-- Treats compiler warnings as errors
-- Builds the project
-- Runs the full test suite
-
-### Clang-Tidy
-
-- Installs clang-tidy
-- Enables static analysis during compilation
-- Treats accepted diagnostics as errors
-- Builds the project
-- Runs the full test suite
+Fields are separated by `|`; names and phone numbers should not contain `|` or line breaks. Save files have no format version or escaping mechanism yet.
 
 ## Architecture
 
-The project currently separates the domain model from the executable demo:
+```mermaid
+flowchart TD
+    Main[main.cpp] --> CLI[CliApplication / CliUtils]
+    CLI --> Core[Network]
+    CLI --> Persistence[NetworkPersistence]
+    Persistence --> Core
+    Persistence --> Files[Serialization / FileUtils]
+    Core --> Records[User / Call]
+    Core --> Events[EventDispatcher]
+    Events --> Subscribers[EventSubscriber implementations]
+    Subscribers --> Loggers[Console / File / Null loggers]
+    Subscribers --> Stats[CallStatistics]
+```
 
-- `User` represents a registered network user.
-- `Call` stores call participants and manages the call state.
-- `Network` owns users and call records and coordinates operations between them.
-- `main.cpp` presents a readable demonstration scenario.
-- GoogleTest tests validate the domain behavior independently from the demo output.
+`telecom_core` is a library linked by both the CLI executable and the test executable. Input and output streams are injected into `CliApplication`, allowing command sequences to be tested without a terminal.
 
-The code is built as a reusable `telecom_core` static library, which is linked by both the application and the test executable.
+| Design choice | Purpose and tradeoff |
+|---|---|
+| Strong `UserId` and `CallId` types | Prevent accidental mixing of identifiers at compile time. |
+| `std::unordered_map` storage | Average constant-time ID lookup; checking whether a user is busy currently scans call records. |
+| `std::variant` result types | Make call creation/start and persistence failures explicit without using exceptions for those expected errors. Some simpler operations return `bool`. |
+| Value-owned records and a move-only `Network` | Give domain objects a clear owner and prevent implicit network copies. |
+| `std::weak_ptr` event subscriptions | Let subscribers expire without the dispatcher extending their lifetime. The application retains the owning `shared_ptr`s. |
+| Separate serialization and file access | Keep storage code outside the call model and test parsing independently. |
 
-## Roadmap
+Useful entry points: [Network](include/Network.h), [CLI](src/CliApplication.cpp), [persistence](src/NetworkPersistence.cpp), and [event dispatcher](src/EventDispatcher.cpp).
 
-Planned development modules include:
+## Tests and CI
 
-- RAII and ownership
-- Smart pointers and dynamic polymorphism
-- Copy and move semantics
-- Consistent error handling
-- Data persistence
-- Interactive command-line interface
-- Dependency management and packaging
-- Docker and multi-stage builds
-- Multithreading, synchronization, race conditions, and deadlocks
-- Code coverage, benchmarks, profiling, and final portfolio preparation
+```bash
+ctest --test-dir build --output-on-failure
+cmake --build build --target format-check
+```
 
-## Learning Goals
+Over 200 tests cover domain rules and invalid state transitions, identifiers, ownership and copy/move behavior, event subscriptions, persistence errors and round trips, and CLI interactions. Additional exercises cover templates, containers, design patterns, and concurrency primitives.
 
-This project is intentionally developed in small, reviewable steps. Its main learning goals are:
+[GitHub Actions](.github/workflows/ci.yml) runs three jobs for pushes and pull requests to `main`:
 
-- Write maintainable modern C++
-- Understand object lifetime and ownership
-- Design safer and clearer APIs
-- Select appropriate standard library containers
-- Analyze time and space complexity
-- Write automated tests for positive and negative scenarios
-- Configure a multi-target CMake project
-- Use compiler warnings and static analysis effectively
-- Detect memory and undefined-behavior problems with sanitizers
-- Work with feature branches, pull requests, code review, and CI
-- Explain technical and architectural decisions during C++ interviews
+| Job | Checks |
+|---|---|
+| Release | Warnings as errors, formatting, build, tests, and the scripted CLI demo |
+| Sanitizers | Debug build and tests with ASan and UBSan |
+| Clang-Tidy | Static analysis during compilation, warnings as errors, and tests |
 
-## Status
+See the [development guide](docs/DEVELOPMENT.md) for local sanitizer, analysis, and packaging commands.
 
-The project is under active development. The current version focuses on the core telecom domain, automated tests, code quality tooling, and CI infrastructure.
+## Docker
+
+```bash
+docker build -t telecom-simulator .
+docker run --rm -it telecom-simulator
+```
+
+Keep standard input open because this is an interactive program. To replay the demo:
+
+```bash
+docker run --rm -i telecom-simulator < examples/demo-input.txt
+```
+
+Files saved inside a removed container are discarded. Mount a directory if you need persistent save files:
+
+```bash
+mkdir -p saves
+docker run --rm -it -v "$PWD/saves:/data" telecom-simulator
+```
+
+Choose Save and enter `/data/network.txt`.
+
+## Repository layout
+
+```text
+include/             Domain interfaces and supporting C++ exercises
+src/                 Domain implementation, persistence, and CLI
+tests/              GoogleTest suites
+examples/            Scripted demo, sample data, and sanitizer exercises
+docs/                Development and portfolio notes
+.github/workflows/   CI configuration
+k8s/                 Experimental interactive-container deployment
+CMakeLists.txt       Build, tests, formatting, install, and packaging
+Dockerfile           Multi-stage build and runtime image
+```
+
+## Scope and next steps
+
+The application is a single-process, in-memory simulation with file persistence. `Network` and `EventDispatcher` are intended for single-threaded use; atomic statistics and concurrency exercises do not make the domain API thread-safe. The design-pattern and concurrency exercises are tested separately and are not all part of the CLI workflow.
+
+The Kubernetes manifest is an educational deployment example using a locally supplied image. The CLI has no HTTP endpoint, service API, or readiness probe.
+
+Future improvements:
+
+- Strengthen persistence validation, add format versioning, and make loads transactional.
+- Define user-removal rules for users referenced by existing calls.
+- Add code coverage reporting and benchmarks before making performance claims.
+- Add an index for active calls if measurements justify it.

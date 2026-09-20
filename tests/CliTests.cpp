@@ -192,6 +192,18 @@ TEST(CliTests, EndsCallFromInput)
     handleEndCall(network, input, output);
 
     EXPECT_NE(output.str().find("Call ended"), std::string::npos);
+    EXPECT_EQ(output.str().find("Could not end call"), std::string::npos);
+}
+
+TEST(CliTests, EndCallReportsMissingCall)
+{
+    Network network;
+    std::istringstream input("999\n");
+    std::ostringstream output;
+
+    handleEndCall(network, input, output);
+
+    EXPECT_EQ(output.str(), "Please enter CallId\nCould not end call\n");
 }
 
 TEST(CliTests, ListsUsers)
@@ -303,6 +315,50 @@ TEST(CliApplicationTests, ExitsWhenUserSelectsExit)
     CliApplication app(network, input, output);
 
     EXPECT_EQ(app.run(), 0);
+}
+
+TEST(CliApplicationTests, ExitsAtEndOfInput)
+{
+    Network network;
+    std::istringstream input("");
+    std::ostringstream output;
+    CliApplication app(network, input, output);
+
+    EXPECT_EQ(app.run(), 0);
+    EXPECT_EQ(output.str().find("Invalid option"), std::string::npos);
+}
+
+TEST(CliApplicationTests, ExitsAfterCommandWithoutExplicitExit)
+{
+    Network network;
+    std::istringstream input("6\n");
+    std::ostringstream output;
+    CliApplication app(network, input, output);
+
+    EXPECT_EQ(app.run(), 0);
+    EXPECT_NE(output.str().find("No users"), std::string::npos);
+}
+
+TEST(CliApplicationTests, ExitsAfterTruncatedCommand)
+{
+    Network network;
+    std::istringstream input("3\n");
+    std::ostringstream output;
+    CliApplication app(network, input, output);
+
+    EXPECT_EQ(app.run(), 0);
+    EXPECT_EQ(network.getCallCount(), 0);
+}
+
+TEST(CliApplicationTests, ReportsBrokenInputStream)
+{
+    Network network;
+    std::istringstream input("");
+    input.setstate(std::ios::badbit);
+    std::ostringstream output;
+    CliApplication app(network, input, output);
+
+    EXPECT_EQ(app.run(), 1);
 }
 
 TEST(CliApplicationTests, HandlesInvalidOptionAndContinues)

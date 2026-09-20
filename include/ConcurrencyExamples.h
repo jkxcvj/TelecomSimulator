@@ -2,6 +2,7 @@
 
 #include <atomic>
 #include <condition_variable>
+#include <future>
 #include <iostream>
 #include <mutex>
 #include <queue>
@@ -110,7 +111,7 @@ int safeDivide(int left, int right)
 {
     if (right == 0)
     {
-        throw std::runtime_error("Nie dziel przez zero cholero");
+        throw std::runtime_error("Division by zero");
     }
     return left / right;
 }

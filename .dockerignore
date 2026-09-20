@@ -2,3 +2,10 @@
 build
 build-*
 .vscode
+package
+install
+Testing
+test_data
+*.log
+*.tar.gz
+.idea

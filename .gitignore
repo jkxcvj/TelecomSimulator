@@ -1,3 +1,13 @@
-build/
-.vscode/
+/build/
 /build-*/
+/package/
+/install/
+/Testing/
+/test_data/
+*.log
+*.tar.gz
+/compile_commands.json
+.vscode/
+.idea/
+.DS_Store
+/docs/PORTFOLIO.md
